@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compliance review console — AML/KYC simulator prototype</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+
+  :root{
+    --ink:#0E1620;
+    --panel:#16212C;
+    --panel-alt:#1C2A38;
+    --border:#26343F;
+    --text:#EDF1F4;
+    --muted:#7C8FA0;
+    --teal:#2BB89A;
+    --teal-dim:#173A34;
+    --amber:#E0A03F;
+    --amber-dim:#3A2E15;
+    --coral:#E2574C;
+    --coral-dim:#3A1D1A;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:var(--ink);
+    color:var(--text);
+    font-family:'IBM Plex Sans', sans-serif;
+    min-height:100vh;
+    padding:32px 20px;
+  }
+  .wrap{ max-width:980px; margin:0 auto; }
+
+  header{ margin-bottom:24px; }
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    letter-spacing:0.08em;
+    color:var(--teal);
+    text-transform:uppercase;
+    margin-bottom:6px;
+  }
+  h1{ font-size:24px; font-weight:600; letter-spacing:-0.01em; }
+  .sub{ color:var(--muted); font-size:14px; margin-top:4px; }
+
+  .layout{
+    display:grid;
+    grid-template-columns:260px 1fr;
+    gap:20px;
+    margin-top:24px;
+  }
+  @media (max-width:760px){ .layout{ grid-template-columns:1fr; } }
+
+  .card{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:20px;
+  }
+
+  /* Customer dossier */
+  .dossier h2{ font-size:13px; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); margin-bottom:14px; font-weight:600; }
+  .field{ margin-bottom:14px; }
+  .field-label{ font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:2px; }
+  .field-value{ font-family:'IBM Plex Mono', monospace; font-size:13px; line-height:1.5; }
+
+  .dial-wrap{ display:flex; flex-direction:column; align-items:center; margin-top:20px; padding-top:20px; border-top:1px solid var(--border); }
+  .dial{ position:relative; width:96px; height:96px; }
+  .dial svg{ transform:rotate(-90deg); }
+  .dial-track{ fill:none; stroke:var(--border); stroke-width:8; }
+  .dial-progress{ fill:none; stroke:var(--teal); stroke-width:8; stroke-linecap:round; transition:stroke-dashoffset .5s ease, stroke .3s ease; }
+  .dial-label{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .dial-num{ font-family:'IBM Plex Mono', monospace; font-size:20px; font-weight:600; }
+  .dial-den{ font-size:10px; color:var(--muted); }
+  .dial-caption{ font-size:11px; color:var(--muted); margin-top:8px; text-transform:uppercase; letter-spacing:0.05em; }
+
+  /* Case card */
+  .case-header{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:16px; }
+  .case-id{ font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--muted); }
+  .queue-pos{ font-size:12px; color:var(--muted); }
+
+  .txn-summary{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:18px; }
+  .txn-amount{ font-family:'IBM Plex Mono', monospace; font-size:28px; font-weight:600; }
+  .txn-type{ font-size:13px; color:var(--muted); margin-top:2px; }
+
+  .detail-row{ display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--border); font-size:13px; }
+  .detail-row:last-child{ border-bottom:none; }
+  .detail-row .k{ color:var(--muted); }
+  .detail-row .v{ font-family:'IBM Plex Mono', monospace; text-align:right; max-width:60%; }
+
+  .narrative{
+    background:var(--panel-alt);
+    border-radius:8px;
+    padding:14px 16px;
+    font-size:13px;
+    line-height:1.6;
+    color:var(--text);
+    margin:16px 0 20px;
+  }
+
+  .actions{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+  .action-btn{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-weight:600;
+    font-size:13px;
+    padding:12px 8px;
+    border-radius:7px;
+    border:1px solid var(--border);
+    background:transparent;
+    color:var(--text);
+    cursor:pointer;
+    transition:transform .12s ease, border-color .15s ease, background .15s ease;
+  }
+  .action-btn:hover{ transform:translateY(-1px); }
+  .action-btn.clear:hover{ border-color:var(--teal); background:var(--teal-dim); }
+  .action-btn.flag:hover{ border-color:var(--amber); background:var(--amber-dim); }
+  .action-btn.escalate:hover{ border-color:var(--coral); background:var(--coral-dim); }
+  .action-btn:disabled{ opacity:0.35; cursor:default; transform:none; }
+
+  /* Reason picker */
+  .reason-picker{ display:none; margin-top:14px; }
+  .reason-picker.show{ display:block; }
+  .reason-picker .hint{ font-size:12px; color:var(--muted); margin-bottom:10px; }
+  .reason-chip{
+    display:inline-block;
+    font-size:12px;
+    font-family:'IBM Plex Mono', monospace;
+    padding:7px 12px;
+    margin:0 6px 6px 0;
+    border-radius:6px;
+    border:1px solid var(--border);
+    background:var(--panel-alt);
+    cursor:pointer;
+  }
+  .reason-chip.selected{ border-color:var(--amber); color:var(--amber); }
+
+  /* Stamp overlay */
+  .stamp{
+    position:absolute;
+    top:40%; left:50%;
+    transform:translate(-50%,-50%) rotate(-8deg) scale(0.4);
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:700;
+    font-size:15px;
+    letter-spacing:0.1em;
+    padding:8px 18px;
+    border:3px solid;
+    border-radius:6px;
+    opacity:0;
+    pointer-events:none;
+    text-transform:uppercase;
+    transition:transform .35s cubic-bezier(.2,1.4,.4,1), opacity .2s ease;
+  }
+  .stamp.show{ opacity:0.94; transform:translate(-50%,-50%) rotate(-8deg) scale(1); }
+  .stamp.correct{ color:var(--teal); border-color:var(--teal); background:rgba(43,184,154,0.08); }
+  .stamp.incorrect{ color:var(--coral); border-color:var(--coral); background:rgba(226,87,76,0.08); }
+
+  .case-wrap{ position:relative; overflow:hidden; }
+
+  .feedback{
+    display:none;
+    margin-top:16px;
+    padding:14px 16px;
+    border-radius:8px;
+    font-size:13px;
+    line-height:1.6;
+    border-left:3px solid;
+  }
+  .feedback.show{ display:block; }
+  .feedback.correct{ background:var(--teal-dim); border-color:var(--teal); }
+  .feedback.incorrect{ background:var(--coral-dim); border-color:var(--coral); }
+  .feedback .tag{ font-family:'IBM Plex Mono', monospace; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; display:block; margin-bottom:6px; opacity:0.85; }
+
+  .next-btn{
+    display:none;
+    margin-top:14px;
+    width:100%;
+    padding:12px;
+    border-radius:7px;
+    border:none;
+    background:var(--text);
+    color:var(--ink);
+    font-weight:600;
+    font-size:13px;
+    cursor:pointer;
+  }
+  .next-btn.show{ display:block; }
+
+  .complete{ display:none; text-align:center; padding:40px 20px; }
+  .complete.show{ display:block; }
+  .complete .score{ font-family:'IBM Plex Mono', monospace; font-size:44px; font-weight:600; color:var(--teal); }
+  .complete .score-label{ color:var(--muted); font-size:13px; margin-top:6px; }
+  .complete .breakdown{ margin-top:24px; text-align:left; max-width:340px; margin-inline:auto; }
+  .complete .breakdown-row{ display:flex; justify-content:space-between; font-size:13px; padding:8px 0; border-bottom:1px solid var(--border); }
+  .restart-btn{
+    margin-top:24px;
+    padding:10px 20px;
+    border-radius:7px;
+    border:1px solid var(--border);
+    background:transparent;
+    color:var(--text);
+    font-size:13px;
+    cursor:pointer;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Prototype — not final content</div>
+    <h1>Compliance review console</h1>
+    <div class="sub">AML/KYC transaction-review simulation — sub-module 6 capstone concept</div>
+  </header>
+
+  <div class="layout">
+    <aside class="card dossier">
+      <h2>Customer dossier</h2>
+      <div class="field">
+        <div class="field-label">Account holder</div>
+        <div class="field-value" id="cust-name">—</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Stated business</div>
+        <div class="field-value" id="cust-business">—</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Account type</div>
+        <div class="field-value" id="cust-type">—</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Expected monthly turnover</div>
+        <div class="field-value" id="cust-turnover">—</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Relationship since</div>
+        <div class="field-value" id="cust-since">—</div>
+      </div>
+
+      <div class="dial-wrap">
+        <div class="dial">
+          <svg width="96" height="96" viewBox="0 0 96 96">
+            <circle class="dial-track" cx="48" cy="48" r="40"></circle>
+            <circle class="dial-progress" id="dial-progress" cx="48" cy="48" r="40"
+              stroke-dasharray="251.2" stroke-dashoffset="251.2"></circle>
+          </svg>
+          <div class="dial-label">
+            <div class="dial-num" id="dial-num">0/6</div>
+          </div>
+        </div>
+        <div class="dial-caption">Cases reviewed</div>
+      </div>
+    </aside>
+
+    <main>
+      <div class="card case-wrap" id="case-card">
+        <div class="stamp" id="stamp">CLEARED</div>
+
+        <div class="case-header">
+          <div class="case-id" id="case-id">CASE-001</div>
+          <div class="queue-pos" id="queue-pos">1 of 6</div>
+        </div>
+
+        <div class="txn-summary">
+          <div>
+            <div class="txn-amount" id="txn-amount">PKR 0</div>
+            <div class="txn-type" id="txn-type">Transaction type</div>
+          </div>
+        </div>
+
+        <div id="txn-details"></div>
+
+        <div class="narrative" id="txn-narrative"></div>
+
+        <div class="actions" id="actions">
+          <button class="action-btn clear" data-action="clear">Clear</button>
+          <button class="action-btn flag" data-action="flag">Flag as suspicious</button>
+          <button class="action-btn escalate" data-action="escalate">Escalate (EDD)</button>
+        </div>
+
+        <div class="reason-picker" id="reason-picker">
+          <div class="hint">Select the red-flag indicator(s) that apply:</div>
+          <div id="reason-chips"></div>
+        </div>
+
+        <div class="feedback" id="feedback">
+          <span class="tag" id="feedback-tag"></span>
+          <span id="feedback-text"></span>
+        </div>
+
+        <button class="next-btn" id="next-btn">Next case →</button>
+      </div>
+
+      <div class="card complete" id="complete-screen">
+        <div class="score" id="final-score">0/6</div>
+        <div class="score-label">Cases correctly resolved</div>
+        <div class="breakdown" id="breakdown"></div>
+        <button class="restart-btn" id="restart-btn">Restart simulation</button>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+// ---- Case data, modeled on SBP AML/CFT thresholds & Annexure-II red flags ----
+const customer = {
+  name: "M. Tariq Enterprises",
+  business: "Wholesale textile trading",
+  type: "Current account — business",
+  turnover: "PKR 800,000 / month",
+  since: "March 2023"
+};
+
+const cases = [
+  {
+    id: "CASE-001",
+    amount: "PKR 350,000",
+    type: "Cash deposit",
+    details: [
+      ["Counterparty", "Walk-in, self"],
+      ["Time", "11:42 AM"],
+      ["Pattern", "Consistent with stated turnover"]
+    ],
+    narrative: "Routine cash deposit into the business account. Amount and frequency are consistent with the customer's declared textile trading turnover.",
+    correct: "clear",
+    category: null,
+    explanation: "Below the PKR 500,000 walk-in verification threshold and consistent with the stated business profile — no red flags present. Clearing is correct."
+  },
+  {
+    id: "CASE-002",
+    amount: "PKR 480,000",
+    type: "Cash deposit",
+    details: [
+      ["Counterparty", "Walk-in, self"],
+      ["Pattern", "4th deposit this week at PKR 470,000–490,000"],
+      ["Note", "Each deposit individually below reporting threshold"]
+    ],
+    narrative: "Customer has made four cash deposits this week, each between PKR 470,000 and 490,000 — consistently just under the CTR threshold of PKR 2,000,000 and the CDD verification threshold of PKR 500,000.",
+    correct: "flag",
+    category: "structuring",
+    explanation: "This matches Annexure-II: deposits structured just below identification/reporting thresholds. Individually unremarkable, but the pattern across the week is a textbook structuring red flag — flagging is correct.",
+    reasons: ["Structuring below threshold", "Inconsistent with profile", "Unusual frequency", "Large cash activity"]
+  },
+  {
+    id: "CASE-003",
+    amount: "PKR 2,600,000",
+    type: "Incoming wire transfer",
+    details: [
+      ["Origin", "Jurisdiction flagged by FATF"],
+      ["Beneficiary info", "Originator details incomplete"],
+      ["Stated purpose", "Not provided"]
+    ],
+    narrative: "Large incoming wire from a jurisdiction of specific FATF concern. The message accompanying the transfer is missing complete originator information, and no purpose has been stated.",
+    correct: "escalate",
+    category: "cross_border",
+    explanation: "Missing originator info on a cross-border wire from a high-risk jurisdiction requires enhanced due diligence and senior management review before the funds can be processed — this goes beyond a standard flag.",
+    reasons: ["High-risk jurisdiction", "Incomplete originator info", "No stated purpose"]
+  },
+  {
+    id: "CASE-004",
+    amount: "PKR 90,000",
+    type: "Outgoing wire transfer",
+    details: [
+      ["Beneficiary", "Registered supplier, Faisalabad"],
+      ["Pattern", "Matches prior 6 months of activity"],
+      ["Purpose", "Fabric stock purchase"]
+    ],
+    narrative: "Regular outgoing payment to a known textile supplier, consistent with the customer's established purchasing pattern over the past six months.",
+    correct: "clear",
+    category: null,
+    explanation: "Consistent counterparty, consistent purpose, consistent amount range — this is normal business activity for a textile trading account. Clearing is correct."
+  },
+  {
+    id: "CASE-005",
+    amount: "PKR 1,850,000",
+    type: "Cash withdrawal",
+    details: [
+      ["Account status", "Dormant for 11 months prior"],
+      ["Trigger", "Large unexpected credit received 2 days ago"],
+      ["Note", "Withdrawal requested same week as credit"]
+    ],
+    narrative: "This account was dormant for nearly a year. Two days ago it received an unexpectedly large credit, and the customer is now requesting a large cash withdrawal in the same week.",
+    correct: "flag",
+    category: "dormant_activation",
+    explanation: "Annexure-II specifically calls out large cash withdrawals from a previously dormant account that just received an unexpected large credit — this is a recognized laundering pattern. Flagging is correct.",
+    reasons: ["Dormant account reactivation", "Rapid fund movement", "Inconsistent with profile", "Large cash activity"]
+  },
+  {
+    id: "CASE-006",
+    amount: "PKR 3,200,000",
+    type: "Cash deposit",
+    details: [
+      ["Counterparty", "Walk-in, self"],
+      ["Note", "Single transaction"],
+      ["Pattern", "Consistent with a known seasonal stock purchase cycle"]
+    ],
+    narrative: "A single large cash deposit ahead of the customer's known seasonal textile stock purchase — a pattern this account has shown for the past two years around this time.",
+    correct: "escalate",
+    category: "ctr_threshold",
+    explanation: "This crosses the PKR 2,000,000 CTR threshold — a Currency Transaction Report is mandatory regardless of how plausible the explanation sounds. This needs escalation for CTR filing, not just a clear.",
+    reasons: ["Exceeds CTR threshold", "Requires mandatory reporting"]
+  }
+];
+
+let current = 0;
+let score = 0;
+let selectedReasons = new Set();
+let decided = false;
+let breakdown = [];
+
+const els = {
+  custName: document.getElementById('cust-name'),
+  custBusiness: document.getElementById('cust-business'),
+  custType: document.getElementById('cust-type'),
+  custTurnover: document.getElementById('cust-turnover'),
+  custSince: document.getElementById('cust-since'),
+  dialProgress: document.getElementById('dial-progress'),
+  dialNum: document.getElementById('dial-num'),
+  caseId: document.getElementById('case-id'),
+  queuePos: document.getElementById('queue-pos'),
+  txnAmount: document.getElementById('txn-amount'),
+  txnType: document.getElementById('txn-type'),
+  txnDetails: document.getElementById('txn-details'),
+  txnNarrative: document.getElementById('txn-narrative'),
+  actions: document.getElementById('actions'),
+  reasonPicker: document.getElementById('reason-picker'),
+  reasonChips: document.getElementById('reason-chips'),
+  feedback: document.getElementById('feedback'),
+  feedbackTag: document.getElementById('feedback-tag'),
+  feedbackText: document.getElementById('feedback-text'),
+  nextBtn: document.getElementById('next-btn'),
+  stamp: document.getElementById('stamp'),
+  caseCard: document.getElementById('case-card'),
+  completeScreen: document.getElementById('complete-screen'),
+  finalScore: document.getElementById('final-score'),
+  breakdownEl: document.getElementById('breakdown'),
+  restartBtn: document.getElementById('restart-btn')
+};
+
+function initCustomer(){
+  els.custName.textContent = customer.name;
+  els.custBusiness.textContent = customer.business;
+  els.custType.textContent = customer.type;
+  els.custTurnover.textContent = customer.turnover;
+  els.custSince.textContent = customer.since;
+}
+
+function updateDial(){
+  const total = cases.length;
+  const pct = current / total;
+  const circumference = 251.2;
+  els.dialProgress.style.strokeDashoffset = circumference - (circumference * pct);
+  els.dialNum.textContent = current + '/' + total;
+}
+
+function loadCase(){
+  decided = false;
+  selectedReasons = new Set();
+  const c = cases[current];
+
+  els.caseId.textContent = c.id;
+  els.queuePos.textContent = (current + 1) + ' of ' + cases.length;
+  els.txnAmount.textContent = c.amount;
+  els.txnType.textContent = c.type;
+
+  els.txnDetails.innerHTML = c.details.map(function(d){
+    return '<div class="detail-row"><span class="k">' + d[0] + '</span><span class="v">' + d[1] + '</span></div>';
+  }).join('');
+
+  els.txnNarrative.textContent = c.narrative;
+
+  els.actions.querySelectorAll('.action-btn').forEach(function(btn){ btn.disabled = false; });
+  els.reasonPicker.classList.remove('show');
+  els.feedback.classList.remove('show', 'correct', 'incorrect');
+  els.nextBtn.classList.remove('show');
+  els.stamp.classList.remove('show', 'correct', 'incorrect');
+
+  if (c.reasons) {
+    els.reasonChips.innerHTML = c.reasons.map(function(r, i){
+      return '<span class="reason-chip" data-reason="' + i + '">' + r + '</span>';
+    }).join('');
+    els.reasonChips.querySelectorAll('.reason-chip').forEach(function(chip){
+      chip.addEventListener('click', function(){
+        if (decided) return;
+        chip.classList.toggle('selected');
+      });
+    });
+  }
+
+  updateDial();
+}
+
+function handleAction(action){
+  if (decided) return;
+
+  const c = cases[current];
+
+  if ((action === 'flag' || action === 'escalate') && c.reasons && els.reasonPicker.classList.contains('show') === false) {
+    els.reasonPicker.classList.add('show');
+    return;
+  }
+
+  decided = true;
+  const isCorrect = action === c.correct;
+  if (isCorrect) score++;
+
+  breakdown.push({ id: c.id, correct: isCorrect, category: c.category || 'baseline' });
+
+  els.actions.querySelectorAll('.action-btn').forEach(function(btn){ btn.disabled = true; });
+
+  els.stamp.textContent = isCorrect ? 'Correct' : 'Review';
+  els.stamp.classList.add('show', isCorrect ? 'correct' : 'incorrect');
+
+  els.feedback.classList.add('show', isCorrect ? 'correct' : 'incorrect');
+  els.feedbackTag.textContent = isCorrect ? 'Correct decision' : 'Not quite — here\'s why';
+  els.feedbackText.textContent = c.explanation;
+
+  els.nextBtn.classList.add('show');
+}
+
+function nextCase(){
+  current++;
+  if (current >= cases.length) {
+    showComplete();
+  } else {
+    loadCase();
+  }
+}
+
+function showComplete(){
+  els.caseCard.style.display = 'none';
+  els.completeScreen.classList.add('show');
+  els.finalScore.textContent = score + '/' + cases.length;
+
+  const cats = {};
+  breakdown.forEach(function(b){
+    if (!cats[b.category]) cats[b.category] = { correct: 0, total: 0 };
+    cats[b.category].total++;
+    if (b.correct) cats[b.category].correct++;
+  });
+
+  els.breakdownEl.innerHTML = Object.keys(cats).map(function(k){
+    const label = k.replace(/_/g, ' ');
+    return '<div class="breakdown-row"><span>' + label + '</span><span>' + cats[k].correct + '/' + cats[k].total + '</span></div>';
+  }).join('');
+
+  updateDial();
+}
+
+function restart(){
+  current = 0;
+  score = 0;
+  breakdown = [];
+  els.caseCard.style.display = 'block';
+  els.completeScreen.classList.remove('show');
+  loadCase();
+}
+
+els.actions.addEventListener('click', function(e){
+  const btn = e.target.closest('.action-btn');
+  if (!btn) return;
+  handleAction(btn.dataset.action);
+});
+
+els.nextBtn.addEventListener('click', nextCase);
+els.restartBtn.addEventListener('click', restart);
+
+initCustomer();
+loadCase();
+</script>
+</body>
+</html>
