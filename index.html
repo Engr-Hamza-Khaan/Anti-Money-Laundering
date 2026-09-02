@@ -6,7 +6,7 @@
 <title>SENTINEL — AML/KYC Compliance Academy</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Nastaliq+Urdu:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --page-a:#F4F9FD;
@@ -88,6 +88,24 @@ h1,h2,h3,h4{color:var(--ink)}
 .iconbtn:hover{color:var(--text);border-color:var(--border2);background:var(--panel2)}
 .iconbtn.muted{color:var(--coral);border-color:color-mix(in srgb,var(--coral) 35%,var(--border))}
 .iconbtn svg{width:17px;height:17px}
+.langbtn{width:auto;min-width:36px;padding:0 9px;font-family:var(--sans);font-size:12px;font-weight:700;letter-spacing:.04em}
+
+body.lang-ur #app,body.lang-ur #stage,body.lang-ur #toasts,body.lang-ur .cmodal,body.lang-ur #splash{
+  direction:rtl;
+}
+body.lang-ur{
+  --sans:'Noto Nastaliq Urdu','IBM Plex Sans',system-ui,sans-serif;
+}
+body.lang-ur .cbubble{line-height:2.05;font-size:17px}
+body.lang-ur .crow{text-align:right;line-height:1.9}
+body.lang-ur .hero h1,body.lang-ur .sechead h2,body.lang-ur .mcard h3,body.lang-ur .mhead h2{line-height:1.55}
+body.lang-ur .eyebrow,body.lang-ur .cbubble .who,body.lang-ur .mcard .mk,body.lang-ur .mhead .tag,
+body.lang-ur .hudpill .lbl,body.lang-ur .stat .l,body.lang-ur .brand-txt .t,body.lang-ur .cprompt{
+  text-transform:none;letter-spacing:.02em;
+}
+body.lang-ur .cnext svg,body.lang-ur .play svg,body.lang-ur .back svg{transform:scaleX(-1)}
+body.lang-ur .drow .v{text-align:left}
+@media(max-width:560px){body.lang-ur .drow .v{text-align:right}}
 
 /* ---------------- stage ---------------- */
 #stage{flex:1;width:100%;max-width:1180px;margin:0 auto;padding:30px 22px 70px}
@@ -772,6 +790,7 @@ img,svg,video{max-width:100%;height:auto}
     </div>
     <div class="tb-spacer"></div>
     <div class="rankchip" id="rankchip"></div>
+    <button class="iconbtn langbtn" id="langbtn" type="button" title="اردو">اردو</button>
     <button class="iconbtn" id="soundbtn" title="Toggle sound"></button>
     <button class="iconbtn" id="resetbtn" title="Reset progress">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -783,6 +802,7 @@ img,svg,video{max-width:100%;height:auto}
 </div>
 <div id="toasts"></div>
 
+<script src="i18n-ur.js"></script>
 <script>
 /* =====================================================================
    SENTINEL — AML/KYC Compliance Academy
@@ -1119,12 +1139,19 @@ const TT_OPTIONS = [
 
 /* Deterministic rule engine — the "simulator logic hook" from the notes */
 function resolveObligation(tx){
-  if (tx.suspicion) return {k:'STR', why:'Suspicion is present, so an STR is filed regardless of amount — there is no minimum, and the duty extends to attempted transactions. Suspicion outranks every other trigger here.'};
-  if (tx.party === 'pep') return {k:'EDD', why:'A PEP relationship requires senior management approval, documented source of wealth and enhanced ongoing monitoring. The obligation attaches to who the customer is, not to the size of this transaction.'};
-  if (tx.party === 'npo') return {k:'EDD', why:'NGO, NPO and charity accounts carry automatic EDD and senior management approval regardless of transaction size.'};
-  if (tx.cash && tx.amount >= RULES.CTR_CASH) return {k:'CTR', why:'A cash transaction of ' + PKR(tx.amount) + ' is at or above the PKR 2,000,000 threshold, so a Currency Transaction Report is mandatory on the amount alone — no suspicion needed.'};
-  if (tx.cash && tx.party === 'walkin' && tx.amount >= RULES.WALKIN_VERIFY) return {k:'VERIFY', why:'A walk-in customer conducting a cash transaction of ' + PKR(tx.amount) + ' is at or above the PKR 500,000 mark, so identity verification is required before processing.'};
-  return {k:'NONE', why:'No threshold is crossed and nothing suspicious is present: ' + PKR(tx.amount) + (tx.cash ? ' in cash' : ' by transfer') + ' for an established customer. Ordinary monitoring continues.'};
+  const O = UR().obligation || {};
+  if (tx.suspicion) return {k:'STR', why: isUr() && O.str ? O.str : 'Suspicion is present, so an STR is filed regardless of amount — there is no minimum, and the duty extends to attempted transactions. Suspicion outranks every other trigger here.'};
+  if (tx.party === 'pep') return {k:'EDD', why: isUr() && O.pep ? O.pep : 'A PEP relationship requires senior management approval, documented source of wealth and enhanced ongoing monitoring. The obligation attaches to who the customer is, not to the size of this transaction.'};
+  if (tx.party === 'npo') return {k:'EDD', why: isUr() && O.npo ? O.npo : 'NGO, NPO and charity accounts carry automatic EDD and senior management approval regardless of transaction size.'};
+  if (tx.cash && tx.amount >= RULES.CTR_CASH) return {k:'CTR', why: isUr()
+    ? (PKR(tx.amount) + ' نقد لین دین بیس لاکھ روپے کی حد پر یا اس سے اوپر ہے، اس لیے کرنسی ٹرانزیکشن رپورٹ صرف رقم پر لازمی ہے — شبہ درکار نہیں۔')
+    : ('A cash transaction of ' + PKR(tx.amount) + ' is at or above the PKR 2,000,000 threshold, so a Currency Transaction Report is mandatory on the amount alone — no suspicion needed.')};
+  if (tx.cash && tx.party === 'walkin' && tx.amount >= RULES.WALKIN_VERIFY) return {k:'VERIFY', why: isUr()
+    ? ('واک اِن کسٹمر کا ' + PKR(tx.amount) + ' نقد لین دین پانچ لاکھ روپے کی حد پر یا اس سے اوپر ہے، اس لیے پروسیس سے پہلے شناخت کی تصدیق لازمی ہے۔')
+    : ('A walk-in customer conducting a cash transaction of ' + PKR(tx.amount) + ' is at or above the PKR 500,000 mark, so identity verification is required before processing.')};
+  return {k:'NONE', why: isUr()
+    ? ('کوئی حد نہیں ٹوٹی اور کچھ مشکوک نہیں: ' + PKR(tx.amount) + (tx.cash ? (O.noneSuffixCash||'') : (O.noneSuffixXfer||'')) + (O.noneFor||''))
+    : ('No threshold is crossed and nothing suspicious is present: ' + PKR(tx.amount) + (tx.cash ? ' in cash' : ' by transfer') + ' for an established customer. Ordinary monitoring continues.')};
 }
 </script>
 
@@ -1327,12 +1354,12 @@ function thermoSVG(amount, isCash){
     <rect x="0" y="22" width="${(x*4).toFixed(1)}" height="8" rx="4" fill="${col}"/>
     <g font-family="IBM Plex Mono, monospace" font-size="8" fill="#6B7F92">
       <line x1="${(cVerify*4).toFixed(1)}" y1="14" x2="${(cVerify*4).toFixed(1)}" y2="38" stroke="#E39A0C" stroke-width="1" stroke-dasharray="2 2"/>
-      <text x="${(cVerify*4+4).toFixed(1)}" y="12">500K · verify</text>
+      <text x="${(cVerify*4+4).toFixed(1)}" y="12">${t('verifyMark','500K · verify')}</text>
       <line x1="${(cCtr*4).toFixed(1)}" y1="14" x2="${(cCtr*4).toFixed(1)}" y2="38" stroke="#E2493C" stroke-width="1" stroke-dasharray="2 2"/>
       <text x="${(cCtr*4+4).toFixed(1)}" y="12">2M · CTR</text>
     </g>
     <circle cx="${(x*4).toFixed(1)}" cy="26" r="6" fill="${col}" stroke="#FFFFFF" stroke-width="2"/>
-    <text x="${Math.min(340,x*4).toFixed(1)}" y="49" font-family="IBM Plex Mono, monospace" font-size="9" fill="${col}">${isCash?'cash':'transfer'}</text>
+    <text x="${Math.min(340,x*4).toFixed(1)}" y="49" font-family="IBM Plex Mono, monospace" font-size="9" fill="${col}">${isCash?t('cash','cash'):t('transfer','transfer')}</text>
   </svg>`;
 }
 
@@ -1365,7 +1392,7 @@ function gaugeSVG(amount, cash){
     </g>
     <circle cx="${cx}" cy="${cy}" r="9" fill="#10202F" stroke="#FFFFFF" stroke-width="2"/>
     <text x="${cx}" y="${cy-30}" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="23" font-weight="600" fill="#10202F">${PKR(amount)}</text>
-    <text x="${cx}" y="${cy-13}" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="10.5" fill="#6B7F92">${cash?'CASH':'NON-CASH TRANSFER'}</text>
+    <text x="${cx}" y="${cy-13}" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="10.5" fill="#6B7F92">${cash?t('cashCaps','CASH'):t('nonCash','NON-CASH TRANSFER')}</text>
   </svg>`;
 }
 
@@ -1504,10 +1531,128 @@ const MISSIONS = [
 ];
 
 const KEY = 'sentinel_aml_v1';
-let S = {xp:0, best:{}, badges:[], seen:[], muted:false, seenIntro:false};
+let S = {xp:0, best:{}, badges:[], seen:[], muted:false, seenIntro:false, lang:'en'};
+
+function isUr(){ return S.lang === 'ur'; }
+function UR(){ return window.SENTINEL_UR || {}; }
+function t(key, en){
+  const ui = UR().ui;
+  if (isUr() && ui && ui[key] != null && typeof ui[key] !== 'function') return ui[key];
+  return en;
+}
+function tf(key, en, a, b){
+  const ui = UR().ui;
+  if (isUr() && ui && typeof ui[key] === 'function') return ui[key](a, b);
+  return typeof en === 'function' ? en(a, b) : en;
+}
+function lu(obj, key){
+  return isUr() && obj && obj[key+'Ur'] != null ? obj[key+'Ur'] : (obj ? obj[key] : '');
+}
+function cddStep(i){
+  const steps = isUr() && UR().cddSteps ? UR().cddSteps : CDD_STEPS;
+  return steps[i];
+}
+function locType(map, en){
+  if (isUr() && map && map[en]) return map[en];
+  return en;
+}
+function speakerElena(){ return (isUr() && UR().ui && UR().ui.names) ? UR().ui.names.elena : 'Elena Vance'; }
+function speakerMarcus(){ return (isUr() && UR().ui && UR().ui.names) ? UR().ui.names.marcus : 'Marcus Hale'; }
+function speakerElenaRole(){ return (isUr() && UR().ui && UR().ui.names) ? UR().ui.names.elenaRole : 'Elena Vance \u00b7 Head of Financial Crime Compliance'; }
+function speakerMarcusRole(){ return (isUr() && UR().ui && UR().ui.names) ? UR().ui.names.marcusRole : 'Marcus Hale \u00b7 Senior AML Analyst'; }
+function reasonLabel(c, en){
+  if (!isUr()) return en;
+  const ix = (c.reasons||[]).indexOf(en);
+  if (ix >= 0 && c.reasonsUr && c.reasonsUr[ix]) return c.reasonsUr[ix];
+  const dix = (c.decoys||[]).indexOf(en);
+  if (dix >= 0 && c.decoysUr && c.decoysUr[dix]) return c.decoysUr[dix];
+  return en;
+}
+function vf(file){
+  if (!file) return file;
+  return isUr() ? 'ur/' + file : file;
+}
+
+(function hydrateUrdu(){
+  const U = UR();
+  if (!U.dialogue) return;
+  const fill = (enArr, urArr)=>{
+    if (!enArr || !urArr) return;
+    enArr.forEach((b,i)=>{
+      const u = urArr[i]; if (!u) return;
+      b.sayUr = u.say;
+      if (u.sys) b.sysUr = u.sys;
+      if (u.note) b.noteUr = u.note;
+      (u.choices||[]).forEach((uc,j)=>{
+        if (b.choices && b.choices[j]){ b.choices[j].tUr = uc.t; b.choices[j].fUr = uc.f; }
+      });
+    });
+  };
+  DIALOGUE.introUr = U.dialogue.intro;
+  DIALOGUE.persona.roleUr = U.dialogue.personaRole;
+  fill(DIALOGUE.beats, U.dialogue.beats);
+  fill(DIALOGUE.edd, U.dialogue.edd);
+  fill(DIALOGUE.standard, U.dialogue.standard);
+  (U.flags||[]).forEach((txt,i)=>{ if (FLAGS[i]) FLAGS[i].tUr = txt; });
+  Object.keys(U.cats||{}).forEach(k=>{ if (CATS[k]) CATS[k].nameUr = U.cats[k]; });
+  (U.glossary||[]).forEach((u,i)=>{ if (GLOSSARY[i]){ GLOSSARY[i].tUr = u.t; GLOSSARY[i].dUr = u.d; }});
+  (U.badges||[]).forEach((u,i)=>{ if (BADGES[i]){ BADGES[i].nUr = u.n; BADGES[i].dUr = u.d; }});
+  (U.ranks||[]).forEach((u,i)=>{ if (RANKS[i]) RANKS[i].nUr = u.n; });
+  (U.missions||[]).forEach((u,i)=>{ if (MISSIONS[i]){ MISSIONS[i].nUr = u.n; MISSIONS[i].dUr = u.d; MISSIONS[i].metaUr = u.meta; }});
+  Object.keys(U.customers||{}).forEach(k=>{
+    const u = U.customers[k], c = CUSTOMERS[k];
+    if (!c || !u) return;
+    c.businessUr = u.business; c.typeUr = u.type; c.turnoverUr = u.turnover;
+  });
+  (U.cases||[]).forEach((u,i)=>{
+    const c = CASES[i]; if (!c || !u) return;
+    c.narrativeUr = u.narrative; c.whyUr = u.why;
+    if (u.details) c.detailsUr = u.details;
+    if (u.reasons) c.reasonsUr = u.reasons;
+    if (u.decoys) c.decoysUr = u.decoys;
+  });
+  Object.keys(U.actions||{}).forEach(k=>{
+    if (ACTION_LABELS[k]){ ACTION_LABELS[k].nUr = U.actions[k].n; ACTION_LABELS[k].dUr = U.actions[k].d; }
+  });
+  (U.ttOptions||[]).forEach((u,i)=>{
+    if (typeof TT_OPTIONS !== 'undefined' && TT_OPTIONS[i]){ TT_OPTIONS[i].nUr = u.n; TT_OPTIONS[i].dUr = u.d; }
+  });
+  if (typeof TT_NOTE !== 'undefined'){
+    Object.keys(U.ttNote||{}).forEach(k=>{
+      if (TT_NOTE[k]) TT_NOTE[k+'Ur'] = U.ttNote[k];
+    });
+  }
+})();
+
+function applyLang(){
+  const ur = isUr();
+  document.documentElement.lang = ur ? 'ur' : 'en';
+  document.body.classList.toggle('lang-ur', ur);
+  const sub = document.querySelector('.brand-txt .t');
+  if (sub) sub.textContent = t('academySub', 'AML / KYC Academy');
+  const lb = document.getElementById('langbtn');
+  if (lb){
+    lb.textContent = ur ? 'EN' : 'اردو';
+    lb.title = ur ? t('langToEn','Switch to English') : t('langToUr','اردو');
+    lb.setAttribute('aria-label', ur ? 'Switch to English' : 'اردو موڈ');
+  }
+  const rb = document.getElementById('resetbtn');
+  if (rb) rb.title = t('resetTitle','Reset progress');
+  const splashEyebrow = document.querySelector('.splash-eyebrow');
+  if (splashEyebrow) splashEyebrow.textContent = t('splashEyebrow', 'SBP AML/CFT · Training simulation');
+  const splashSub = document.querySelector('.splash-sub');
+  if (splashSub) splashSub.textContent = t('splashSub', 'AML / KYC Academy');
+  const splashSkip = document.querySelector('.splash-skip');
+  if (splashSkip) splashSkip.textContent = t('skipSplash', 'Click or tap to skip');
+  const splashStatus = document.getElementById('splashstatus');
+  if (splashStatus && splashStatus.textContent) splashStatus.textContent = t('loading', 'Loading academy…');
+  renderSoundBtn();
+  renderRank();
+}
 
 function load(){
   try{ const r = localStorage.getItem(KEY); if (r) S = Object.assign(S, JSON.parse(r)); }catch(e){}
+  if (S.lang !== 'ur') S.lang = 'en';
 }
 function save(){
   try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){}
@@ -1525,7 +1670,7 @@ function awardXP(n, label){
   const after = rankOf(S.xp);
   if (after.n !== before.n){
     confetti(); beep('rank');
-    toast('Promoted to ' + after.n, 'Rank up — ' + after.stars + ' star' + (after.stars>1?'s':'') + '. ' + S.xp + ' XP total.');
+    toast(t('promoted','Promoted to ') + lu(after,'n'), t('rankUp','Rank up — ') + after.stars + ' ' + (after.stars>1?t('stars','stars'):t('star','star')) + '. ' + S.xp + ' XP ' + t('xp','total.'));
   } else if (label){
     toast('+' + n + ' XP', label);
   }
@@ -1535,7 +1680,7 @@ function awardBadge(id){
   S.badges.push(id); save();
   const b = BADGES.find(x=>x.id===id);
   beep('good');
-  toast('Badge unlocked — ' + b.n, b.d);
+  toast(t('badgeUnlocked','Badge unlocked — ') + lu(b,'n'), lu(b,'d'));
 }
 
 /* ---- sound (WebAudio beeps + MP3 voice) ---- */
@@ -1560,7 +1705,7 @@ function stopVoice(clearFile){
   }
 }
 function startVoiceEl(file){
-  const a = new Audio(VOICE_BASE + file);
+  const a = new Audio(VOICE_BASE + vf(file));
   _voice = a;
   const p = a.play();
   if (p && p.catch) p.catch(()=>{});
@@ -1630,17 +1775,17 @@ function renderRank(){
   const span = nx ? (S.xp - r.min) / (nx.min - r.min) : 1;
   document.getElementById('rankchip').innerHTML =
     rankBadge(r.stars) +
-    `<div><div class="rk">${r.n}</div>
-      <div class="xp">${S.xp} XP${nx?` \u00b7 ${nx.min - S.xp} to ${nx.n}`:' \u00b7 max rank'}</div>
+    `<div><div class="rk">${lu(r,'n')}</div>
+      <div class="xp">${S.xp} XP${nx?` \u00b7 ${nx.min - S.xp} ${t('to','to')} ${lu(nx,'n')}`:' \u00b7 ' + t('maxRank','max rank')}</div>
       <div class="xpbar"><i style="width:${(span*100).toFixed(1)}%"></i></div></div>`;
 }
 function renderSoundBtn(){
   const btn = document.getElementById('soundbtn');
   btn.innerHTML = icon(S.muted?'mute':'sound');
   btn.classList.toggle('muted', !!S.muted);
-  btn.title = S.muted ? 'Sound off — tap to enable voice' : 'Sound on — tap to mute';
+  btn.title = S.muted ? t('soundOff','Sound off — tap to enable voice') : t('soundOn','Sound on — tap to mute');
   btn.setAttribute('aria-pressed', S.muted ? 'false' : 'true');
-  btn.setAttribute('aria-label', S.muted ? 'Enable voice' : 'Mute voice');
+  btn.setAttribute('aria-label', S.muted ? t('enableVoice','Enable voice') : t('muteVoice','Mute voice'));
 }
 
 /* ---- router ---- */
@@ -1676,8 +1821,8 @@ function openModal(html){
 }
 function missionHead(m, hud){
   return `<div class="mhead">
-    <button class="back" id="backbtn">${icon('back')} Academy</button>
-    <div><div class="tag" style="color:${m.c}">${m.k}</div><h2>${m.n}</h2></div>
+    <button class="back" id="backbtn">${icon('back')} ${t('academy','Academy')}</button>
+    <div><div class="tag" style="color:${m.c}">${m.k}</div><h2>${lu(m,'n')}</h2></div>
     <div class="mhead-spacer"></div>
     ${hud||''}
   </div>`;
@@ -1687,10 +1832,11 @@ function bindBack(){
   if (b) b.onclick = home;
 }
 function grade(pct){
-  if (pct >= 90) return {g:'Exemplary', b:'Decision quality at this level is what a supervisor signs off without a second review.'};
-  if (pct >= 75) return {g:'Competent', b:'Solid working judgement. The misses are worth reading back through before you move on.'};
-  if (pct >= 55) return {g:'Developing', b:'The core rules are landing but the edge cases are not. A second run through will pay off.'};
-  return {g:'Needs review', b:'Work back through the Reference Vault — the thresholds and red-flag families are what most of these turned on.'};
+  const g = UR().ui && UR().ui.grade;
+  if (pct >= 90) return isUr() && g ? g.ex : {g:'Exemplary', b:'Decision quality at this level is what a supervisor signs off without a second review.'};
+  if (pct >= 75) return isUr() && g ? g.co : {g:'Competent', b:'Solid working judgement. The misses are worth reading back through before you move on.'};
+  if (pct >= 55) return isUr() && g ? g.de : {g:'Developing', b:'The core rules are landing but the edge cases are not. A second run through will pay off.'};
+  return isUr() && g ? g.nr : {g:'Needs review', b:'Work back through the Reference Vault — the thresholds and red-flag families are what most of these turned on.'};
 }
 function shuffle(a){ const x = a.slice(); for (let i=x.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; [x[i],x[j]]=[x[j],x[i]]; } return x; }
 
@@ -1806,6 +1952,7 @@ function say(name, text, opts){
     if (opts.append) host.appendChild(b); else { host.innerHTML = ''; host.appendChild(b); }
     const body = b.querySelector('.body');
     const caret = b.querySelector('.caret');
+    const chunks = isUr() ? (text.match(/(\s+|[^\s]+)/g) || [text]) : null;
     let i = 0, settled = false, typed = false;
     const audio = playVoice(opts.voice);
     let heard = !opts.voice || S.muted;
@@ -1835,10 +1982,13 @@ function say(name, text, opts){
     const startTyping = ms => {
       if (typed || _typing) return;
       if (ms === 0){ clearType(); maybeResolve(); return; }
+      const units = chunks || null;
+      const n = units ? units.length : text.length;
       _typing = setInterval(()=>{
         if (!b.isConnected){ skip(); return; }
-        body.textContent = text.slice(0, ++i);
-        if (i >= text.length){
+        i++;
+        body.textContent = units ? units.slice(0, i).join('') : text.slice(0, i);
+        if (i >= n){
           if (_typing){ clearInterval(_typing); _typing = null; }
           if (caret && caret.parentNode) caret.remove();
           typed = true;
@@ -1850,7 +2000,8 @@ function say(name, text, opts){
     if (audio){
       const kick = ()=>{
         const dur = (audio.duration || 0) * 1000;
-        startTyping(dur > 0 ? Math.max(10, dur / text.length) : speed);
+        const n = chunks ? chunks.length : text.length;
+        startTyping(dur > 0 ? Math.max(10, dur / Math.max(1,n)) : speed);
       };
       if (audio.readyState >= 1) kick();
       else audio.addEventListener('loadedmetadata', kick, {once:true});
@@ -1867,7 +2018,7 @@ function choices(items, opts){
   const host = opts.el || document.getElementById('choiceslot');
   return new Promise(resolve=>{
     host.innerHTML =
-      (opts.prompt === false ? '' : `<div class="cprompt">${opts.prompt || 'Select The Most Effective Answer.'}</div>`) +
+      (opts.prompt === false ? '' : `<div class="cprompt">${opts.prompt || t('selectAnswer','Select The Most Effective Answer.')}</div>`) +
       `<div class="cchoices" id="crows">` +
       items.map((c,ix)=>`<button class="crow" data-i="${ix}">
         <span class="ic">${c.ic == null ? ix+1 : c.ic}</span><span>${c.t}</span></button>`).join('') +
@@ -1896,7 +2047,7 @@ function brief(m, bgKey, artKey, name, lines){
     (async ()=>{
       for (const line of lines){
         if (nav !== _nav) return;
-        const text = typeof line === 'string' ? line : line.t;
+        const text = typeof line === 'string' ? line : (isUr() && line.tUr ? line.tUr : line.t);
         const voice = typeof line === 'string' ? null : line.v;
         await say(name, text, {append:true, voice});
       }
@@ -1904,7 +2055,7 @@ function brief(m, bgKey, artKey, name, lines){
       const slot = document.getElementById('ctaslot');
       if (!slot) return;
       slot.innerHTML =
-        `<button class="cnext" id="startbtn" style="margin-left:0">Start ${icon('arrow')}</button>`;
+        `<button class="cnext" id="startbtn" style="margin-left:0">${t('start','Start')} ${icon('arrow')}</button>`;
       const sb = document.getElementById('startbtn');
       sb.onclick = ()=>{ beep('pick'); resolve(); };
       setKeys(e=>{ if (e.key==='Enter'||e.key===' '){ e.preventDefault(); sb.click(); } });
@@ -1955,49 +2106,49 @@ function home(){
     <div class="home-top">
     <div class="hero" style="grid-template-columns:1fr">
       <div class="hero-l">
-        <div class="eyebrow">SBP AML/CFT \u00b7 Training simulation</div>
-        <h1>You are the last <em>control</em> before the money moves.</h1>
-        <p>Four modules built from Pakistan\u2019s AML/CFT regulations for banks and DFIs. Onboard a customer who does not want to be onboarded properly, learn the red-flag families by sight, work a live transaction queue, and drill the thresholds until they are reflex.</p>
+        <div class="eyebrow">${t('heroEyebrow','SBP AML/CFT \u00b7 Training simulation')}</div>
+        <h1>${t('heroH1a','You are the last ')}<em>${t('heroH1em','control')}</em>${t('heroH1b',' before the money moves.')}</h1>
+        <p>${t('heroP','Four modules built from Pakistan\u2019s AML/CFT regulations for banks and DFIs. Onboard a customer who does not want to be onboarded properly, learn the red-flag families by sight, work a live transaction queue, and drill the thresholds until they are reflex.')}</p>
         <div class="statrow">
-          <div class="stat"><div class="v">${S.xp}</div><div class="l">Total XP</div></div>
-          <div class="stat"><div class="v">${done}/${scored.length}</div><div class="l">Modules</div></div>
-          <div class="stat"><div class="v">${S.badges.length}/${BADGES.length}</div><div class="l">Badges</div></div>
-          <div class="stat"><div class="v">${allDone?avg+'%':'\u2014'}</div><div class="l">Average</div></div>
+          <div class="stat"><div class="v">${S.xp}</div><div class="l">${t('xp','Total XP')}</div></div>
+          <div class="stat"><div class="v">${done}/${scored.length}</div><div class="l">${t('modules','Modules')}</div></div>
+          <div class="stat"><div class="v">${S.badges.length}/${BADGES.length}</div><div class="l">${t('badges','Badges')}</div></div>
+          <div class="stat"><div class="v">${allDone?avg+'%':'\u2014'}</div><div class="l">${t('average','Average')}</div></div>
         </div>
       </div>
     </div>
     <div class="achieve-box">
-      <h2>Achievements</h2>
-      <div class="d">${S.badges.length} of ${BADGES.length} unlocked.</div>
+      <h2>${t('achievements','Achievements')}</h2>
+      <div class="d">${tf('unlockedOf', S.badges.length + ' of ' + BADGES.length + ' unlocked.', S.badges.length, BADGES.length)}</div>
       <div class="badgerow">
         ${BADGES.map(b=>`
-          <div class="badge ${S.badges.includes(b.id)?'earned':''}" title="${b.d}">
-            ${badgeArt(b.id)}<div class="bn">${b.n}</div>
+          <div class="badge ${S.badges.includes(b.id)?'earned':''}" title="${lu(b,'d')}">
+            ${badgeArt(b.id)}<div class="bn">${lu(b,'n')}</div>
           </div>`).join('')}
       </div>
-      ${allDone ? `<button class="btn primary" id="certbtn" style="margin-top:18px">View credential</button>` : ''}
+      ${allDone ? `<button class="btn primary" id="certbtn" style="margin-top:18px">${t('viewCredential','View credential')}</button>` : ''}
     </div>
     </div>
 
     <div class="sechead">
       <div>
-        <div class="eyebrow">Curriculum</div>
-        <h2>Training modules</h2>
-        <div class="d">Each module maps to a section of the SBP content notes. Play in any order.</div>
+        <div class="eyebrow">${t('curriculum','Curriculum')}</div>
+        <h2>${t('trainingModules','Training modules')}</h2>
+        <div class="d">${t('curriculumD','Each module maps to a section of the SBP content notes. Play in any order.')}</div>
       </div>
     </div>
     <div class="mgrid">
       ${MISSIONS.filter(m=>!m.hidden).map(m=>`
         <div class="mcard" data-m="${m.id}" style="--c:${m.c}">
           <div class="micon">${icon(m.icon)}</div>
-          <div class="mk">${m.id==='vault' ? m.k : 'Day ' + (scored.findIndex(x=>x.id===m.id) + 1) + ' \u00b7 ' + m.k}</div>
-          <h3>${m.n}</h3>
-          <p>${m.d}</p>
+          <div class="mk">${m.id==='vault' ? m.k : t('day','Day') + ' ' + (scored.findIndex(x=>x.id===m.id) + 1) + ' \u00b7 ' + m.k}</div>
+          <h3>${lu(m,'n')}</h3>
+          <p>${lu(m,'d')}</p>
           <div class="mfoot">
-            <span class="mmeta">${m.meta}</span>
+            <span class="mmeta">${lu(m,'meta')}</span>
             ${S.best[m.id]!=null
-              ? `<span class="mbest">Best ${S.best[m.id]}%</span>`
-              : `<span class="play">Start ${icon('arrow')}</span>`}
+              ? `<span class="mbest">${t('best','Best')} ${S.best[m.id]}%</span>`
+              : `<span class="play">${t('startPlay','Start')} ${icon('arrow')}</span>`}
           </div>
         </div>`).join('')}
     </div>
@@ -2031,7 +2182,7 @@ function results(o){
   const prevBest = S.best[o.id];
   const isBest = prevBest == null || pct > prevBest;
   if (isBest){ S.best[o.id] = pct; save(); }
-  awardXP(o.xp, m.n + ' complete');
+  awardXP(o.xp, lu(m,'n') + ' ' + t('complete','complete'));
   beep('done');
   if (pct >= 80 && ['radar','console','thresholds'].includes(o.id)) awardBadge(o.id);
 
@@ -2042,9 +2193,9 @@ function results(o){
         <div class="bigscore" style="color:${m.c}">${pct}%</div>
         <div class="grade">${g.g} \u00b7 ${o.headline}</div>
         <div class="blurb">${g.b}</div>
-        <div class="xpgain">+${o.xp} XP${isBest?' \u00b7 new personal best':''}</div>
+        <div class="xpgain">+${o.xp} XP${isBest?' \u00b7 ' + t('newBest','new personal best'):''}</div>
         ${o.breakdown && o.breakdown.length ? `<div class="brk">
-          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">${o.brkTitle||'Breakdown'}</div>
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">${o.brkTitle||t('breakdown','Breakdown')}</div>
           ${o.breakdown.map(b=>`
             <div class="brk-row">
               <span class="bl">${b.label}</span>
@@ -2054,8 +2205,8 @@ function results(o){
         </div>` : ''}
         ${o.extra || ''}
         <div class="res-actions">
-          <button class="cnext" id="againbtn">Run it again</button>
-          <button class="btn ghost" id="homebtn">Back to academy</button>
+          <button class="cnext" id="againbtn">${t('runAgain','Run it again')}</button>
+          <button class="btn ghost" id="homebtn">${t('backAcademy','Back to academy')}</button>
         </div>
       </div>
     </div>
@@ -2088,33 +2239,33 @@ function missionOnboarding(){
 
   function draw(){
     const b = seq[i];
-    const hud = `<div class="hudpill"><span class="lbl">Decision</span><b>${i+1}/${seq.length}</b></div>`;
+    const hud = `<div class="hudpill"><span class="lbl">${t('decision','Decision')}</span><b>${i+1}/${seq.length}</b></div>`;
     go(`
       ${missionHead(m, hud)}
       <div class="progline"><i style="width:${(i/seq.length*100).toFixed(1)}%"></i></div>
       <div class="cdd-steps">
-        ${CDD_STEPS.map((s,ix)=>`<div class="cdd-step ${ix===b.step?'on':ix<b.step?'done':''}">${ix+1}. ${s}</div>`).join('')}
+        ${CDD_STEPS.map((s,ix)=>`<div class="cdd-step ${ix===b.step?'on':ix<b.step?'done':''}">${ix+1}. ${cddStep(ix)}</div>`).join('')}
       </div>
       <div class="panel" style="max-width:min(100%,760px);margin-left:auto">
         <div class="hud-row">
           <div>
             <div style="font-size:15px;font-weight:600;color:var(--ink)">${P.name}</div>
-            <div style="font-size:12px;color:var(--muted)">${P.role}</div>
+            <div style="font-size:12px;color:var(--muted)">${lu(P,'role')}</div>
           </div>
           <div style="flex:1"></div>
           <div class="meter" style="width:150px;margin:0">
-            <div class="mrow"><span>File integrity</span><span style="color:${integrity>=80?'var(--teal)':integrity>=50?'var(--amber)':'var(--coral)'}">${integrity}%</span></div>
+            <div class="mrow"><span>${t('fileIntegrity','File integrity')}</span><span style="color:${integrity>=80?'var(--teal)':integrity>=50?'var(--amber)':'var(--coral)'}">${integrity}%</span></div>
             <div class="bar"><i style="width:${integrity}%;background:${integrity>=80?'var(--teal)':integrity>=50?'var(--amber)':'var(--coral)'}"></i></div>
           </div>
           <div class="meter" style="width:150px;margin:0">
-            <div class="mrow"><span>Rapport</span><span style="color:var(--blue)">${rapport}%</span></div>
+            <div class="mrow"><span>${t('rapport','Rapport')}</span><span style="color:var(--blue)">${rapport}%</span></div>
             <div class="bar"><i style="width:${rapport}%;background:var(--blue)"></i></div>
           </div>
         </div>
-        ${b.sys ? `<div class="bubble sys"><span class="who">Eleven days later</span>${b.sys}</div>` : ''}
-        ${i===0 ? `<div class="bubble sys"><span class="who">Branch floor</span>${DIALOGUE.intro}</div>` : ''}
+        ${b.sys ? `<div class="bubble sys"><span class="who">${t('elevenDays','Eleven days later')}</span>${lu(b,'sys')}</div>` : ''}
+        ${i===0 ? `<div class="bubble sys"><span class="who">${t('branchFloor','Branch floor')}</span>${lu(DIALOGUE,'intro')}</div>` : ''}
         <div id="bubbleslot"></div>
-        ${b.note ? `<div class="narr" style="margin:14px 0 0"><b style="color:var(--amber);font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:6px">On the file</b>${b.note}</div>` : ''}
+        ${b.note ? `<div class="narr" style="margin:14px 0 0"><b style="color:var(--amber);font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:6px">${t('onTheFile','On the file')}</b>${lu(b,'note')}</div>` : ''}
         <div id="choiceslot" style="margin-top:18px"></div>
         <div id="fbslot"></div>
       </div>
@@ -2123,9 +2274,9 @@ function missionOnboarding(){
     if (custA) custA.mood('cust-foreign');
     const nav = _nav;
     (async ()=>{
-      await say(P.name, b.say, {voice:b.voice});
+      await say(P.name, lu(b,'say'), {voice:b.voice});
       if (nav !== _nav) return;
-      const ix = await choices(b.choices.map(c=>({t:c.t})));
+      const ix = await choices(b.choices.map(c=>({t:lu(c,'t')})));
       if (nav !== _nav) return;
       const btn = document.querySelector(`#crows .crow[data-i="${ix}"]`);
       answer(ix, btn);
@@ -2158,12 +2309,12 @@ function missionOnboarding(){
 
     openModal(`
       <div class="verdict ${c.v}">
-        <span class="vt">${c.v==='good'?'Correct handling':c.v==='meh'?'Partially correct':'Regulatory breach'}</span>
-        ${c.f}
-        <span class="cite">Reference \u2014 ${c.cite}</span>
+        <span class="vt">${c.v==='good'?t('correctHandling','Correct handling'):c.v==='meh'?t('partial','Partially correct'):t('breach','Regulatory breach')}</span>
+        ${lu(c,'f')}
+        <span class="cite">${t('reference','Reference')} \u2014 ${c.cite}</span>
       </div>
       <div class="cmodal-foot">
-        <button class="cnext" id="nextbtn">${i+1>=seq.length && branchResolved()?'See assessment':'Next'} ${icon('arrow')}</button>
+        <button class="cnext" id="nextbtn">${i+1>=seq.length && branchResolved()?t('seeAssessment','See assessment'):t('next','Next')} ${icon('arrow')}</button>
       </div>`);
 
     const nb = document.getElementById('nextbtn');
@@ -2179,25 +2330,25 @@ function missionOnboarding(){
     if (tipOffs === 0) awardBadge('clean');
     const xp = Math.round(pts * 9);
     const brk = Object.keys(stepScores).map(k=>({
-      label:'Step \u2014 ' + k,
+      label:t('step','Step') + ' \u2014 ' + cddStep(CDD_STEPS.indexOf(k)),
       pct:Math.round(stepScores[k].p/stepScores[k].m*100),
       val:stepScores[k].p + '/' + stepScores[k].m
     }));
     results({
-      id:'onboarding', pct, xp, breakdown:brk, brkTitle:'By CDD step',
-      headline: pts + '/' + max + ' decision points',
+      id:'onboarding', pct, xp, breakdown:brk, brkTitle:t('byCddStep','By CDD step'),
+      headline: pts + '/' + max + ' ' + t('decisionPoints','decision points'),
       extra:`<div style="max-width:520px;margin:24px auto 0;text-align:left">
-        <div class="drow"><span class="k">Path taken at risk assessment</span><span class="v" style="color:${branch==='edd'?'var(--teal)':'var(--coral)'}">${branch==='edd'?'Enhanced due diligence':'Standard CDD \u2014 escalated back later'}</span></div>
-        <div class="drow"><span class="k">Tipping-off breaches</span><span class="v" style="color:${tipOffs?'var(--coral)':'var(--teal)'}">${tipOffs}</span></div>
-        <div class="drow"><span class="k">Final file integrity</span><span class="v">${integrity}%</span></div>
+        <div class="drow"><span class="k">${t('pathTaken','Path taken at risk assessment')}</span><span class="v" style="color:${branch==='edd'?'var(--teal)':'var(--coral)'}">${branch==='edd'?t('pathEdd','Enhanced due diligence'):t('pathStd','Standard CDD \u2014 escalated back later')}</span></div>
+        <div class="drow"><span class="k">${t('tipOffs','Tipping-off breaches')}</span><span class="v" style="color:${tipOffs?'var(--coral)':'var(--teal)'}">${tipOffs}</span></div>
+        <div class="drow"><span class="k">${t('finalIntegrity','Final file integrity')}</span><span class="v">${integrity}%</span></div>
       </div>`,
       again: missionOnboarding
     });
   }
 
-  brief(m, 'bg-branch', 'elena-explain', 'Elena Vance', [
-    {t:'There is a new relationship waiting at the counter. Your job is customer due diligence: identify them, verify the identity against a reliable source, establish who really owns the business, and then decide how much scrutiny this file needs.', v:'03-onboard-brief-elena-1.mp3'},
-    {t:'The customer will be helpful right up to the moment you ask something inconvenient. Remember that rapport is not what the file is judged on.', v:'04-onboard-brief-elena-2.mp3'}
+  brief(m, 'bg-branch', 'elena-explain', speakerElena(), [
+    {t:'There is a new relationship waiting at the counter. Your job is customer due diligence: identify them, verify the identity against a reliable source, establish who really owns the business, and then decide how much scrutiny this file needs.', tUr:'کاؤنٹر پر ایک نیا رشتہ انتظار کر رہا ہے۔ آپ کا کام کسٹمر ڈیو ڈیلیجنس ہے: ان کی شناخت کریں، شناخت کا کسی قابلِ اعتماد ذریعے سے ویریفائی کریں، یہ طے کریں کہ کاروبار کا اصل مالک کون ہے، اور پھر فیصلہ کریں کہ اس فائل پر کتنی جانچ چاہیے۔', v:'03-onboard-brief-elena-1.mp3'},
+    {t:'The customer will be helpful right up to the moment you ask something inconvenient. Remember that rapport is not what the file is judged on.', tUr:'کسٹمر اس لمحے تک مددگار رہے گا جب تک آپ کچھ ناگوار نہ پوچھیں۔ یاد رکھیں — فائل پر فیصلہ رپورٹ سے ہوتا ہے، دوستانہ رویے سے نہیں۔', v:'04-onboard-brief-elena-2.mp3'}
   ]).then(()=>{
     clearActors();
     setScene('bg-branch');
@@ -2223,15 +2374,15 @@ function missionRadar(){
     let left = LIMIT, locked = false;
     go(`
       ${missionHead(m, `
-        <div class="hudpill"><span class="lbl">Round</span><b>${i+1}/${ROUNDS}</b></div>
-        <div class="hudpill"><span class="lbl">Hits</span><b style="color:var(--teal)">${correct}</b></div>
-        <div class="hudpill"><span class="lbl">Combo</span><b class="combo" id="combo">\u00d7${combo||1}</b></div>`)}
+        <div class="hudpill"><span class="lbl">${t('round','Round')}</span><b>${i+1}/${ROUNDS}</b></div>
+        <div class="hudpill"><span class="lbl">${t('hits','Hits')}</span><b style="color:var(--teal)">${correct}</b></div>
+        <div class="hudpill"><span class="lbl">${t('combo','Combo')}</span><b class="combo" id="combo">\u00d7${combo||1}</b></div>`)}
       <div class="panel" style="max-width:min(100%,780px);margin-left:auto">
         <div class="hud-row">
           ${ringHTML('tring')}
           <div class="flagcard" style="flex:1;margin:0">
-            <div class="obs">Observation ${String(i+1).padStart(2,'0')}</div>
-            <div class="txt">${f.t}</div>
+            <div class="obs">${t('observation','Observation')} ${String(i+1).padStart(2,'0')}</div>
+            <div class="txt">${lu(f,'t')}</div>
           </div>
         </div>
         <div id="choiceslot"></div>
@@ -2240,7 +2391,7 @@ function missionRadar(){
     `);
     bindBack();
     ringSet('tring', 1, LIMIT);
-    choices(catKeys.map((k,ix)=>({t:CATS[k].name, ic:k})), {prompt:'Which red-flag family is this?'})
+    choices(catKeys.map((k,ix)=>({t:lu(CATS[k],'name'), ic:k})), {prompt:t('whichFamily','Which red-flag family is this?')})
       .then(ix=>{ const k = catKeys[ix]; pick(k, document.querySelector(`#crows .crow[data-i="${ix}"]`)); });
 
     const t = setInterval(()=>{
@@ -2272,13 +2423,13 @@ function missionRadar(){
 
       document.getElementById('fbslot').innerHTML = `
         <div class="verdict ${ok?'good':'bad'}">
-          <span class="vt">${ok?'Correct family':k===null?'Time expired':'Wrong family'}</span>
-          This belongs to <b style="color:${CATS[f.c].color}">Category ${f.c} \u2014 ${CATS[f.c].name}</b>.
-          ${ok ? 'Sorting by family is what lets you reach for the right follow-up question instead of a generic one.'
-               : 'Read it again against the family definition \u2014 the giveaway is what the observation is really about, not the amount involved.'}
-          <span class="cite">Reference \u2014 Red-flag indicator library, category ${f.c}</span>
+          <span class="vt">${ok?t('correctFamily','Correct family'):k===null?t('timeExpired','Time expired'):t('wrongFamily','Wrong family')}</span>
+          ${t('belongsTo','This belongs to')} <b style="color:${CATS[f.c].color}">${f.c} \u2014 ${lu(CATS[f.c],'name')}</b>.
+          ${ok ? t('familyOk','Sorting by family is what lets you reach for the right follow-up question instead of a generic one.')
+               : t('familyBad','Read it again against the family definition \u2014 the giveaway is what the observation is really about, not the amount involved.')}
+          <span class="cite">${t('reference','Reference')} \u2014 ${f.c}</span>
         </div>
-        <div style="display:flex;margin-top:14px"><button class="cnext" id="nextbtn">${i+1>=ROUNDS?'See assessment':'Next observation'} ${icon('arrow')}</button></div>`;
+        <div style="display:flex;margin-top:14px"><button class="cnext" id="nextbtn">${i+1>=ROUNDS?t('seeAssessment','See assessment'):t('nextObs','Next observation')} ${icon('arrow')}</button></div>`;
       const nb = document.getElementById('nextbtn');
       setKeys(e=>{ if (e.key==='Enter'||e.key===' '){ e.preventDefault(); nb.click(); } });
       nb.onclick = ()=>{ i++; if (i>=ROUNDS) finish(); else draw(); };
@@ -2289,20 +2440,20 @@ function missionRadar(){
     clearActors();
     const pct = correct/ROUNDS*100;
     const brk = Object.keys(perCat).filter(k=>perCat[k].t>0).map(k=>({
-      label:'Cat ' + k + ' \u2014 ' + CATS[k].name,
+      label:'Cat ' + k + ' \u2014 ' + lu(CATS[k],'name'),
       pct:Math.round(perCat[k].c/perCat[k].t*100),
       val:perCat[k].c + '/' + perCat[k].t
     }));
     results({
-      id:'radar', pct, xp:points, breakdown:brk, brkTitle:'By red-flag family',
-      headline: correct + '/' + ROUNDS + ' sorted correctly \u00b7 best combo \u00d7' + Math.max(1,bestCombo),
+      id:'radar', pct, xp:points, breakdown:brk, brkTitle:t('byFamily','By red-flag family'),
+      headline: correct + '/' + ROUNDS + ' ' + t('sortedCorrect','sorted correctly') + ' \u00b7 ' + t('bestCombo','best combo') + ' \u00d7' + Math.max(1,bestCombo),
       again: missionRadar
     });
   }
 
-  brief(m, 'bg-opsfloor', 'marcus-neutral', 'Marcus Hale', [
-    {t:'Five red-flag families, A through E, straight out of Annexure-II. If you cannot name the family an observation belongs to, you cannot reach for the right follow-up question.', v:'15-radar-brief-marcus-1.mp3'},
-    {t:'Ten observations, eighteen seconds each. Answer fast and the combo multiplier stays alive.', v:'16-radar-brief-marcus-2.mp3'}
+  brief(m, 'bg-opsfloor', 'marcus-neutral', speakerMarcus(), [
+    {t:'Five red-flag families, A through E, straight out of Annexure-II. If you cannot name the family an observation belongs to, you cannot reach for the right follow-up question.', tUr:'پانچ ریڈ فلیگ فیملیز، اے سے ای، سیدھا اینیکسر ٹو سے۔ اگر آپ مشاہدے کی فیملی کا نام نہیں لے سکتے، تو درست فالو اپ سوال تک پہنچ ہی نہیں سکتے۔', v:'15-radar-brief-marcus-1.mp3'},
+    {t:'Ten observations, eighteen seconds each. Answer fast and the combo multiplier stays alive.', tUr:'دس مشاہدے، ہر ایک اٹھارہ سیکنڈ۔ جلدی جواب دو تو کامبو ملٹیپلائر زندہ رہتا ہے۔', v:'16-radar-brief-marcus-2.mp3'}
   ]).then(()=>{
     clearActors();
     setScene('bg-opsfloor');
@@ -2330,45 +2481,45 @@ function missionConsole(){
 
     go(`
       ${missionHead(m, `
-        <div class="hudpill"><span class="lbl">Case</span><b>${i+1}/${CASES.length}</b></div>
-        <div class="hudpill"><span class="lbl">Resolved</span><b style="color:var(--teal)">${correct}</b></div>`)}
+        <div class="hudpill"><span class="lbl">${t('case','Case')}</span><b>${i+1}/${CASES.length}</b></div>
+        <div class="hudpill"><span class="lbl">${t('resolved','Resolved')}</span><b style="color:var(--teal)">${correct}</b></div>`)}
       <div class="progline"><i style="width:${(i/CASES.length*100).toFixed(1)}%"></i></div>
       <div class="con-wrap">
         <div class="panel dossier">
-          <h4>Customer dossier</h4>
-          <div class="field"><div class="fl">Account holder</div><div class="fv">${cust.name}</div></div>
-          <div class="field"><div class="fl">Stated business</div><div class="fv">${cust.business}</div></div>
-          <div class="field"><div class="fl">Account type</div><div class="fv">${cust.type}</div></div>
-          <div class="field"><div class="fl">Expected turnover</div><div class="fv">${cust.turnover}</div></div>
-          <div class="field"><div class="fl">Relationship since</div><div class="fv">${cust.since}</div></div>
-          <div class="field"><div class="fl">Risk rating</div><div class="fv"><span class="risktag ${cust.risk}">${cust.risk==='low'?'Low':cust.risk==='med'?'Medium':'High'}</span></div></div>
+          <h4>${t('dossier','Customer dossier')}</h4>
+          <div class="field"><div class="fl">${t('accountHolder','Account holder')}</div><div class="fv">${cust.name}</div></div>
+          <div class="field"><div class="fl">${t('statedBusiness','Stated business')}</div><div class="fv">${lu(cust,'business')}</div></div>
+          <div class="field"><div class="fl">${t('accountType','Account type')}</div><div class="fv">${lu(cust,'type')}</div></div>
+          <div class="field"><div class="fl">${t('expectedTurnover','Expected turnover')}</div><div class="fv">${lu(cust,'turnover')}</div></div>
+          <div class="field"><div class="fl">${t('since','Relationship since')}</div><div class="fv">${cust.since}</div></div>
+          <div class="field"><div class="fl">${t('riskRating','Risk rating')}</div><div class="fv"><span class="risktag ${cust.risk}">${cust.risk==='low'?t('low','Low'):cust.risk==='med'?t('med','Medium'):t('high','High')}</span></div></div>
         </div>
 
         <div class="panel case-wrap" id="casecard">
-          <div class="stamp" id="stamp">Cleared</div>
+          <div class="stamp" id="stamp">${t('cleared','Cleared')}</div>
           <div class="case-top">
             <span class="case-id">${c.id}</span>
-            <span class="case-id">Queue position ${i+1} of ${CASES.length}</span>
+            <span class="case-id">${t('queuePos','Queue position')} ${i+1} ${t('of','of')} ${CASES.length}</span>
           </div>
           <div class="amtrow">
             <div>
               <div class="amt"><span class="cur">PKR</span>${c.amount.toLocaleString('en-US')}</div>
-              <div class="ttype">${c.type}</div>
+              <div class="ttype">${locType(UR().caseTypes, c.type)}</div>
             </div>
           </div>
           <div class="thermo">${thermoSVG(c.amount, isCash)}</div>
-          <div>${c.details.map(d=>`<div class="drow"><span class="k">${d[0]}</span><span class="v">${d[1]}</span></div>`).join('')}</div>
-          <div class="narr">${c.narrative}</div>
+          <div>${(isUr() && c.detailsUr ? c.detailsUr : c.details).map(d=>`<div class="drow"><span class="k">${d[0]}</span><span class="v">${d[1]}</span></div>`).join('')}</div>
+          <div class="narr">${lu(c,'narrative')}</div>
           <div class="acts" id="acts">
             ${Object.keys(ACTION_LABELS).map(k=>`
-              <button class="act" data-a="${k}"><span>${ACTION_LABELS[k].n}</span><small>${ACTION_LABELS[k].d}</small></button>`).join('')}
+              <button class="act" data-a="${k}"><span>${lu(ACTION_LABELS[k],'n')}</span><small>${lu(ACTION_LABELS[k],'d')}</small></button>`).join('')}
           </div>
         </div>
       </div>
       <div class="reasons" id="reasons">
-        <div class="h">Which indicator are you acting on? Select every one that applies, then confirm.</div>
-        <div id="chips">${chipList.map((r,ix)=>`<span class="chip" data-r="${ix}">${r}</span>`).join('')}</div>
-        <button class="btn primary wide" id="confirm" style="margin-top:12px">Confirm decision</button>
+        <div class="h">${t('whichIndicator','Which indicator are you acting on? Select every one that applies, then confirm.')}</div>
+        <div id="chips">${chipList.map((r,ix)=>`<span class="chip" data-r="${ix}">${reasonLabel(c, r)}</span>`).join('')}</div>
+        <button class="btn primary wide" id="confirm" style="margin-top:12px">${t('confirm','Confirm decision')}</button>
       </div>
       <div id="fbslot"></div>
     `);
@@ -2395,7 +2546,7 @@ function missionConsole(){
           };
         });
         document.getElementById('confirm').onclick = ()=>{
-          if (!picked.size){ toast('Select an indicator', 'A flag or escalation has to name the pattern it rests on.'); return; }
+          if (!picked.size){ toast(t('selectIndicator','Select an indicator'), t('selectIndicatorD','A flag or escalation has to name the pattern it rests on.')); return; }
           resolve(stage2);
         };
         return;
@@ -2413,6 +2564,7 @@ function missionConsole(){
 
       // justification accuracy
       let jNote = '';
+      let cleanJust = false;
       if (c.reasons){
         justTotal++;
         const correctSet = new Set(c.correctReasons.map(ix=>c.reasons[ix]));
@@ -2420,10 +2572,10 @@ function missionConsole(){
         const hits = chosen.filter(x=>correctSet.has(x)).length;
         const falsePos = chosen.length - hits;
         const clean = hits === correctSet.size && falsePos === 0;
-        if (clean){ justOK++; jNote = 'Justification was complete and carried no decoys.'; }
-        else if (hits && !falsePos) jNote = 'Justification was on the right track but incomplete \u2014 you named ' + hits + ' of ' + correctSet.size + ' applicable indicators.';
-        else if (falsePos) jNote = 'Justification included ' + falsePos + ' indicator' + (falsePos>1?'s':'') + ' that does not apply to this case.';
-        else jNote = 'None of the selected indicators apply to this case.';
+        if (clean){ justOK++; cleanJust = true; jNote = t('justComplete','Justification was complete and carried no decoys.'); }
+        else if (hits && !falsePos) jNote = tf('justIncomplete', 'Justification was on the right track but incomplete \u2014 you named ' + hits + ' of ' + correctSet.size + ' applicable indicators.', hits, correctSet.size);
+        else if (falsePos) jNote = tf('justFalse', 'Justification included ' + falsePos + ' indicator' + (falsePos>1?'s':'') + ' that does not apply to this case.', falsePos);
+        else jNote = t('justNone','None of the selected indicators apply to this case.');
 
         document.querySelectorAll('#chips .chip').forEach(ch=>{
           const label = chipList[ch.dataset.r];
@@ -2431,7 +2583,7 @@ function missionConsole(){
         });
       }
 
-      points += (ok?18:0) + (c.reasons && jNote.startsWith('Justification was complete')?7:0);
+      points += (ok?18:0) + (c.reasons && cleanJust?7:0);
 
       acts.querySelectorAll('.act').forEach(el=>{ el.disabled = true; });
       const chosenBtn = acts.querySelector(`.act[data-a="${a}"]`);
@@ -2440,7 +2592,7 @@ function missionConsole(){
       if (cf) cf.disabled = true;
 
       const st = document.getElementById('stamp');
-      st.textContent = ok ? 'Correct' : 'Re-review';
+      st.textContent = ok ? t('correct','Correct') : t('rereview','Re-review');
       st.classList.add('show', ok?'good':'bad');
       beep(ok?'good':'bad');
       actor(ok ? 'elena-explain' : 'elena-concern', 'right', {id:'mentor'});
@@ -2450,13 +2602,13 @@ function missionConsole(){
 
       openModal(`
         <div class="verdict ${ok?'good':'bad'}">
-          <span class="vt">${ok?'Correct disposition':'Incorrect disposition'}</span>
-          ${ok ? '' : `<b>The correct action was \u201c${ACTION_LABELS[c.correct].n}\u201d.</b> `}${c.why}
+          <span class="vt">${ok?t('correctDisp','Correct disposition'):t('incorrectDisp','Incorrect disposition')}</span>
+          ${ok ? '' : `<b>${t('correctActionWas','The correct action was')} \u201c${lu(ACTION_LABELS[c.correct],'n')}\u201d.</b> `}${lu(c,'why')}
           ${jNote ? `<span style="display:block;margin-top:9px;color:var(--muted)">${jNote}</span>` : ''}
-          <span class="cite">Reference \u2014 ${c.category==='baseline'?'Thresholds \u00a72 \u00b7 no indicator present':'Red-flag library \u00b7 ' + c.category.replace(/_/g,' ')}</span>
+          <span class="cite">${t('reference','Reference')} \u2014 ${c.category==='baseline'?'Thresholds \u00a72':'Red-flag library \u00b7 ' + c.category.replace(/_/g,' ')}</span>
         </div>
         <div class="cmodal-foot">
-          <button class="cnext" id="nextbtn">${i+1>=CASES.length?'See assessment':'Next\u00a0case'} ${icon('arrow')}</button>
+          <button class="cnext" id="nextbtn">${i+1>=CASES.length?t('seeAssessment','See assessment'):t('nextCase','Next case')} ${icon('arrow')}</button>
         </div>`);
       const nb = document.getElementById('nextbtn');
       setKeys(e=>{ if (e.key==='Enter'||e.key===' '){ e.preventDefault(); nb.click(); } });
@@ -2473,19 +2625,19 @@ function missionConsole(){
       val:perCat[k].c + '/' + perCat[k].t
     }));
     results({
-      id:'console', pct, xp:points, breakdown:brk, brkTitle:'By red-flag category \u2014 this is what an adaptive engine would route remediation on',
-      headline: correct + '/' + CASES.length + ' dispositions correct',
+      id:'console', pct, xp:points, breakdown:brk, brkTitle:t('byCat','By red-flag category \u2014 this is what an adaptive engine would route remediation on'),
+      headline: correct + '/' + CASES.length + ' ' + t('dispositions','dispositions correct'),
       extra:`<div style="max-width:520px;margin:24px auto 0;text-align:left">
-        <div class="drow"><span class="k">Fully correct justifications</span><span class="v">${justOK}/${justTotal}</span></div>
-        <div class="drow"><span class="k">Naming the indicator matters because</span><span class="v" style="max-width:60%;font-family:var(--sans);color:var(--muted);font-size:11.5px">an STR has to record the basis for the decision</span></div>
+        <div class="drow"><span class="k">${t('fullyJust','Fully correct justifications')}</span><span class="v">${justOK}/${justTotal}</span></div>
+        <div class="drow"><span class="k">${t('namingMatters','Naming the indicator matters because')}</span><span class="v" style="max-width:60%;font-family:var(--sans);color:var(--muted);font-size:11.5px">${t('namingWhy','an STR has to record the basis for the decision')}</span></div>
       </div>`,
       again: missionConsole
     });
   }
 
-  brief(m, 'bg-opsfloor', 'elena-explain', 'Elena Vance', [
-    {t:'This is the live queue. Every case in it is a real transaction waiting on a disposition from you: clear it, flag it, or escalate it.', v:'17-console-brief-elena-1.mp3'},
-    {t:'Flagging is not enough on its own. You have to name the indicator you are acting on, because an STR has to record the basis for the decision \u2014 and so does a decision not to file one.', v:'18-console-brief-elena-2.mp3'}
+  brief(m, 'bg-opsfloor', 'elena-explain', speakerElena(), [
+    {t:'This is the live queue. Every case in it is a real transaction waiting on a disposition from you: clear it, flag it, or escalate it.', tUr:'یہ لائیو کیو ہے۔ اس میں ہر کیس ایک حقیقی ٹرانزیکشن ہے جو آپ کے ڈسپوزیشن کا انتظار کر رہی ہے: کلیئر کریں، فلیگ کریں، یا ایسکلیٹ کریں۔', v:'17-console-brief-elena-1.mp3'},
+    {t:'Flagging is not enough on its own. You have to name the indicator you are acting on, because an STR has to record the basis for the decision \u2014 and so does a decision not to file one.', tUr:'صرف فلیگ کرنا کافی نہیں۔ آپ کو وہ انڈیکیٹر نامزد کرنا ہوگا جس پر آپ عمل کر رہے ہیں، کیونکہ ایس ٹی آر میں فیصلے کی بنیاد درج ہونی چاہیے — اور نہ فائل کرنے کے فیصلے کی بھی۔', v:'18-console-brief-elena-2.mp3'}
   ]).then(()=>{
     clearActors();
     setScene('bg-opsfloor');
@@ -2521,6 +2673,9 @@ const TT_NOTE = {
 };
 const rnd = (a,b) => Math.round((a + Math.random()*(b-a)) / 10000) * 10000;
 const pick1 = a => a[(Math.random()*a.length)|0];
+function ttNotes(kind){
+  return (isUr() && UR().ttNote && UR().ttNote[kind]) ? UR().ttNote[kind] : TT_NOTE[kind];
+}
 
 function makeDrill(kind){
   const who = pick1(TT_NAMES);
@@ -2529,27 +2684,27 @@ function makeDrill(kind){
       const cash = Math.random() < .5;
       return {who, cash, party:'existing', suspicion:false,
               amount: cash ? rnd(40000, 460000) : rnd(120000, 1800000),
-              type: cash ? 'Cash deposit' : 'Outgoing transfer', note: pick1(TT_NOTE.none)};
+              type: cash ? 'Cash deposit' : 'Outgoing transfer',               note: pick1(ttNotes('none'))};
     }
     case 'verify':
       return {who, cash:true, party:'walkin', suspicion:false,
-              amount: rnd(510000, 1900000), type:'Cash deposit', note: pick1(TT_NOTE.verify)};
+              amount: rnd(510000, 1900000), type:'Cash deposit', note: pick1(ttNotes('verify'))};
     case 'ctr':
       return {who, cash:true, party: Math.random()<.5 ? 'existing' : 'walkin', suspicion:false,
               amount: rnd(2000000, 3600000),
-              type: Math.random()<.5 ? 'Cash deposit' : 'Cash withdrawal', note: pick1(TT_NOTE.ctr)};
+              type: Math.random()<.5 ? 'Cash deposit' : 'Cash withdrawal', note: pick1(ttNotes('ctr'))};
     case 'str': {
       const cash = Math.random() < .6;
       return {who, cash, party:'existing', suspicion:true,
               amount: rnd(60000, 1500000),
-              type: cash ? 'Cash deposit' : 'Incoming transfer', note: pick1(TT_NOTE.str)};
+              type: cash ? 'Cash deposit' : 'Incoming transfer', note: pick1(ttNotes('str'))};
     }
     case 'edd': {
       const party = Math.random() < .5 ? 'pep' : 'npo';
       return {who, cash: Math.random()<.5, party, suspicion:false,
               amount: rnd(30000, 1200000),
               type: Math.random()<.5 ? 'Cash deposit' : 'Outgoing transfer',
-              note: pick1(TT_NOTE[party])};
+              note: pick1(ttNotes(party))};
     }
   }
 }
@@ -2570,20 +2725,20 @@ function missionThresholds(){
 
     go(`
       ${missionHead(m, `
-        <div class="hudpill"><span class="lbl">Drill</span><b>${i+1}/${ROUNDS}</b></div>
-        <div class="hudpill"><span class="lbl">Correct</span><b style="color:var(--teal)">${correct}</b></div>
-        <div class="hudpill"><span class="lbl">Streak</span><b class="combo">${streak}</b></div>`)}
+        <div class="hudpill"><span class="lbl">${t('drill','Drill')}</span><b>${i+1}/${ROUNDS}</b></div>
+        <div class="hudpill"><span class="lbl">${t('correctLbl','Correct')}</span><b style="color:var(--teal)">${correct}</b></div>
+        <div class="hudpill"><span class="lbl">${t('streak','Streak')}</span><b class="combo">${streak}</b></div>`)}
       <div class="panel" style="max-width:min(100%,720px)">
         <div class="hud-row" style="margin-bottom:14px">
           ${ringHTML('tring')}
           <div class="tt-ctx" style="flex:1;margin:0">
-            <div class="who">${tx.who} \u00b7 ${tx.type}</div>
+            <div class="who">${tx.who} \u00b7 ${locType(UR().ttTypes, tx.type)}</div>
             <div class="note">${tx.note}</div>
           </div>
         </div>
         <div class="gauge">${gaugeSVG(tx.amount, tx.cash)}</div>
         <div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:14px;line-height:1.6">
-          Name the <b style="color:var(--ink)">primary</b> obligation. Where more than one could apply the higher duty wins:
+          ${t('primaryHint','Name the <b style="color:var(--ink)">primary</b> obligation. Where more than one could apply the higher duty wins:')}
           STR &rsaquo; EDD &rsaquo; CTR &rsaquo; verify &rsaquo; none.
         </div>
         <div id="choiceslot"></div>
@@ -2592,8 +2747,8 @@ function missionThresholds(){
     `);
     bindBack();
     ringSet('tring', 1, LIMIT);
-    choices(TT_OPTIONS.map(o=>({t:`<b style="color:var(--ink)">${o.n}</b> \u2014 ${o.d}`})),
-            {prompt:'Name the primary obligation.'})
+    choices(TT_OPTIONS.map(o=>({t:`<b style="color:var(--ink)">${lu(o,'n')}</b> \u2014 ${lu(o,'d')}`})),
+            {prompt:t('namePrimary','Name the primary obligation.')})
       .then(ix=>{ const o = TT_OPTIONS[ix];
                   pick(o.k, document.querySelector(`#crows .crow[data-i="${ix}"]`)); });
 
@@ -2627,12 +2782,12 @@ function missionThresholds(){
 
       openModal(`
         <div class="verdict ${ok?'good':'bad'}">
-          <span class="vt">${ok?'Correct':k===null?'Time expired':'Incorrect'}</span>
+          <span class="vt">${ok?t('correct','Correct'):k===null?t('timeExpired','Time expired'):t('incorrect','Incorrect')}</span>
           ${ans.why}
-          <span class="cite">Reference \u2014 Key thresholds &amp; triggers \u00a72</span>
+          <span class="cite">${t('reference','Reference')} \u2014 Key thresholds \u00a72</span>
         </div>
         <div class="cmodal-foot">
-          <button class="cnext" id="nextbtn">${i+1>=ROUNDS?'See assessment':'Next\u00a0drill'} ${icon('arrow')}</button>
+          <button class="cnext" id="nextbtn">${i+1>=ROUNDS?t('seeAssessment','See assessment'):t('nextDrill','Next drill')} ${icon('arrow')}</button>
         </div>`);
       const nb = document.getElementById('nextbtn');
       setKeys(e=>{ if (e.key==='Enter'||e.key===' '){ e.preventDefault(); nb.click(); } });
@@ -2643,20 +2798,20 @@ function missionThresholds(){
   function finish(){
     clearActors();
     const pct = correct/ROUNDS*100;
-    const names = {NONE:'No report required', VERIFY:'Walk-in verification', CTR:'CTR \u00b7 PKR 2M cash', STR:'STR \u00b7 any amount', EDD:'EDD \u00b7 PEP &amp; NPO'};
+    const names = isUr() && UR().ttKindNames ? UR().ttKindNames : {NONE:'No report required', VERIFY:'Walk-in verification', CTR:'CTR \u00b7 PKR 2M cash', STR:'STR \u00b7 any amount', EDD:'EDD \u00b7 PEP &amp; NPO'};
     const brk = Object.keys(perKind).map(k=>({
       label:names[k], pct:Math.round(perKind[k].c/perKind[k].t*100), val:perKind[k].c + '/' + perKind[k].t
     }));
     results({
-      id:'thresholds', pct, xp:points, breakdown:brk, brkTitle:'By obligation type',
-      headline: correct + '/' + ROUNDS + ' correct \u00b7 best streak ' + bestStreak,
+      id:'thresholds', pct, xp:points, breakdown:brk, brkTitle:t('byObligation','By obligation type'),
+      headline: correct + '/' + ROUNDS + ' ' + t('correctLbl','correct') + ' \u00b7 ' + t('bestStreak','best streak') + ' ' + bestStreak,
       again: missionThresholds
     });
   }
 
-  brief(m, 'bg-boardroom', 'elena-explain', 'Elena Vance', [
-    {t:'Thresholds are the part you cannot look up mid-conversation. Two million rupees in cash triggers a CTR whether or not anything looks wrong. Five hundred thousand from a walk-in triggers identity verification. An STR has no floor at all.', v:'19-thresholds-brief-elena-1.mp3'},
-    {t:'Twelve drills, twenty-two seconds each. Where more than one obligation could apply, the higher duty wins.', v:'20-thresholds-brief-elena-2.mp3'}
+  brief(m, 'bg-boardroom', 'elena-explain', speakerElena(), [
+    {t:'Thresholds are the part you cannot look up mid-conversation. Two million rupees in cash triggers a CTR whether or not anything looks wrong. Five hundred thousand from a walk-in triggers identity verification. An STR has no floor at all.', tUr:'تھریشولڈز وہ حصّہ ہیں جو گفتگو کے درمیان دیکھے نہیں جا سکتے۔ نقد میں بیس لاکھ روپے سی ٹی آر چالو کرتے ہیں، چاہے کچھ غلط نظر نہ آئے۔ واک اِن سے پانچ لاکھ شناخت کی تصدیق چالو کرتے ہیں۔ ایس ٹی آر کی کوئی نیچلی حد ہی نہیں۔', v:'19-thresholds-brief-elena-1.mp3'},
+    {t:'Twelve drills, twenty-two seconds each. Where more than one obligation could apply, the higher duty wins.', tUr:'بارہ ڈرلز، ہر ایک بائیس سیکنڈ۔ جہاں ایک سے زیادہ فرض لاگو ہو سکیں، اونچا فرض جیتتا ہے۔', v:'20-thresholds-brief-elena-2.mp3'}
   ]).then(()=>{
     clearActors();
     setScene('bg-boardroom');
@@ -2674,10 +2829,9 @@ function screenVault(){
   setScene(null);
   const m = MISSIONS.find(x=>x.id==='vault');
   go(`
-    ${missionHead(m, `<div class="hudpill"><span class="lbl">Opened</span><b id="seencount">${S.seen.length}/${GLOSSARY.length}</b></div>`)}
+    ${missionHead(m, `<div class="hudpill"><span class="lbl">${t('opened','Opened')}</span><b id="seencount">${S.seen.length}/${GLOSSARY.length}</b></div>`)}
     <div class="panel alt" style="margin-bottom:18px;font-size:13px;color:var(--muted);line-height:1.7">
-      Every rule the four modules test, in one place. Tap a card to turn it over.
-      These are paraphrased working definitions for training \u2014 the binding text is the SBP regulation itself.
+      ${t('vaultBlurb','Every rule the four modules test, in one place. Tap a card to turn it over. These are paraphrased working definitions for training \u2014 the binding text is the SBP regulation itself.')}
     </div>
     <div class="vgrid">
       ${GLOSSARY.map((g,ix)=>`
@@ -2686,11 +2840,11 @@ function screenVault(){
             <div class="vface vfront">
               <span class="vseen"></span>
               <div><div class="vk">${g.k}</div></div>
-              <div class="vt">${g.t}</div>
-              <div class="hint">Tap to reveal \u2192</div>
+              <div class="vt">${lu(g,'t')}</div>
+              <div class="hint">${t('tapReveal','Tap to reveal \u2192')}</div>
             </div>
             <div class="vface vback">
-              <p>${g.d}</p>
+              <p>${lu(g,'d')}</p>
               <div class="src">${g.s}</div>
             </div>
           </div>
@@ -2730,29 +2884,28 @@ function screenCertificate(avg){
       .cert{border-color:#B9963C;background:#fff;color:#111}
       .cert h3,.cert .cline div{color:#111}.cert .cn,.cert .cline span{color:#555}
     }</style>
-    ${missionHead({k:'Credential', n:'Programme record', c:'#C9962C'}, '')}
+    ${missionHead({k:t('credential','Credential'), n:t('programmeRecord','Programme record'), c:'#C9962C'}, '')}
     <div class="cert">
       <div class="seal">${sealSVG()}</div>
       <div class="ct">Sentinel AML / KYC Academy</div>
-      <h3>${passed ? 'Programme completed' : 'Provisional record'}</h3>
+      <h3>${passed ? t('programmeDone','Programme completed') : t('provisional','Provisional record')}</h3>
       <div class="cn">
-        All four training modules attempted across customer due diligence, red-flag recognition,
-        transaction disposition and reporting thresholds, based on the SBP AML/CFT regulations for banks and DFIs.
-        ${passed ? '' : '<br><br>A 70% average across modules is needed for a full completion record \u2014 replay the weaker modules to lift it.'}
+        ${t('certBody','All four training modules attempted across customer due diligence, red-flag recognition, transaction disposition and reporting thresholds, based on the SBP AML/CFT regulations for banks and DFIs.')}
+        ${passed ? '' : '<br><br>' + t('certNeed','A 70% average across modules is needed for a full completion record \u2014 replay the weaker modules to lift it.')}
       </div>
       <div class="cline">
-        <div>${avg}%<span>Average</span></div>
-        <div>${S.xp}<span>Total XP</span></div>
-        <div>${r.n}<span>Rank attained</span></div>
-        <div>${S.badges.length}/${BADGES.length}<span>Badges</span></div>
-        <div>${date}<span>Issued</span></div>
+        <div>${avg}%<span>${t('average','Average')}</span></div>
+        <div>${S.xp}<span>${t('xp','Total XP')}</span></div>
+        <div>${lu(r,'n')}<span>${t('rankAttained','Rank attained')}</span></div>
+        <div>${S.badges.length}/${BADGES.length}<span>${t('badges','Badges')}</span></div>
+        <div>${date}<span>${t('issued','Issued')}</span></div>
       </div>
     </div>
     <div class="res-actions">
-      <button class="btn primary" id="printbtn">Print / save as PDF</button>
-      <button class="btn ghost" id="homebtn2">Back to academy</button>
+      <button class="btn primary" id="printbtn">${t('printPdf','Print / save as PDF')}</button>
+      <button class="btn ghost" id="homebtn2">${t('backAcademy','Back to academy')}</button>
     </div>
-    <div class="note">Simulation record only. This is a training prototype and carries no regulatory or certification standing.</div>
+    <div class="note">${t('certNote','Simulation record only. This is a training prototype and carries no regulatory or certification standing.')}</div>
   `);
   bindBack();
   document.getElementById('printbtn').onclick = ()=>window.print();
@@ -2770,7 +2923,7 @@ function coldOpen(){
 
     const skip = document.createElement('button');
     skip.className = 'skipbtn';
-    skip.textContent = 'Skip intro';
+    skip.textContent = t('skipIntro','Skip intro');
     document.body.appendChild(skip);
 
     let cancelled = false;
@@ -2788,7 +2941,7 @@ function coldOpen(){
     stage.innerHTML = `<div class="screen" style="min-height:66vh;display:flex;flex-direction:column;
       align-items:center;justify-content:center;gap:26px;text-align:center">
       <div id="titleslot">
-        <div class="eyebrow" style="justify-content:center">SBP AML/CFT &middot; Training simulation</div>
+        <div class="eyebrow" style="justify-content:center">${t('heroEyebrow','SBP AML/CFT &middot; Training simulation')}</div>
         <h1 style="font-size:44px;line-height:1.08;font-weight:700;letter-spacing:-.02em;margin-top:12px">
           SENTINEL</h1>
       </div>
@@ -2803,23 +2956,27 @@ function coldOpen(){
       actor('elena-explain','right');
       await new Promise(r=>setTimeout(r, 500));
       if (cancelled) return;
-      await say('Elena Vance \u00b7 Head of Financial Crime Compliance',
-        'You are the last control before the money moves. Everything upstream of you is paperwork. Everything downstream is somebody else\u2019s problem.',
+      await say(speakerElenaRole(),
+        isUr()
+          ? 'آپ پیسے منتقل ہونے سے پہلے آخری کنٹرول ہیں۔ اوپر جو کچھ ہے وہ کاغذی کارروائی ہے۔ نیچے جو ہے وہ کسی اور کا مسئلہ ہے۔'
+          : 'You are the last control before the money moves. Everything upstream of you is paperwork. Everything downstream is somebody else\u2019s problem.',
         {voice:'01-intro-elena.mp3'});
       if (cancelled) return;
 
       actor('marcus-neutral','left');
       await new Promise(r=>setTimeout(r, 450));
       if (cancelled) return;
-      await say('Marcus Hale \u00b7 Senior AML Analyst',
-        'Four modules. Onboard a customer who does not want to be onboarded properly, learn the red-flag families by sight, work a live transaction queue, and drill the thresholds until they are reflex.',
+      await say(speakerMarcusRole(),
+        isUr()
+          ? 'چار ماڈیولز ہیں۔ ایک ایسا کسٹمر آن بورڈ کرو جو ٹھیک طریقے سے آن بورڈ نہیں ہونا چاہتا، ریڈ فلیگ فیملیز نظر سے پہچانو، لائیو ٹرانزیکشن کیو سنبھالو، اور تھریشولڈز اتنے رٹا لو کہ ریفلیکس بن جائیں۔'
+          : 'Four modules. Onboard a customer who does not want to be onboarded properly, learn the red-flag families by sight, work a live transaction queue, and drill the thresholds until they are reflex.',
         {append:true, voice:'02-intro-marcus.mp3'});
       if (cancelled) return;
 
       const slot = document.getElementById('ctaslot');
       if (!slot || cancelled) return;
       slot.innerHTML =
-        `<button class="cnext" id="beginbtn" style="margin:0">Begin training</button>`;
+        `<button class="cnext" id="beginbtn" style="margin:0">${t('begin','Begin training')}</button>`;
       const bb = document.getElementById('beginbtn');
       bb.onclick = ()=>{ beep('pick'); finish(); };
       setKeys(e=>{ if (e.key==='Enter'||e.key===' '){ e.preventDefault(); bb.click(); } });
@@ -2849,7 +3006,7 @@ function splash(){
       cancelAnimationFrame(raf);
       document.removeEventListener('keydown', onKey);
       if (bar) bar.style.width = '100%';
-      if (status) status.textContent = 'Ready';
+      if (status) status.textContent = t('ready','Ready');
       el.classList.add('out');
       setTimeout(()=>{
         document.body.classList.remove('splashing');
@@ -2900,19 +3057,29 @@ document.getElementById('soundbtn').onclick = ()=>{
     if (!unmuteVoice()) beep('pick');
   }
 };
+document.getElementById('langbtn').onclick = ()=>{
+  S.lang = isUr() ? 'en' : 'ur';
+  save();
+  applyLang();
+  stopVoice();
+  const skip = document.querySelector('.skipbtn');
+  if (skip) skip.click();
+  else if (!document.getElementById('splash')) home();
+};
 document.getElementById('resetbtn').onclick = ()=>{
-  if (!confirm('Reset all progress — XP, ranks, badges and best scores?')) return;
-  S = {xp:0, best:{}, badges:[], seen:[], muted:S.muted, seenIntro:true};
+  if (!confirm(t('resetConfirm','Reset all progress — XP, ranks, badges and best scores?'))) return;
+  S = {xp:0, best:{}, badges:[], seen:[], muted:S.muted, seenIntro:true, lang:S.lang};
   save(); renderRank(); home();
-  toast('Progress reset', 'Back to Trainee with a clean record.');
+  toast(t('resetToast','Progress reset'), t('resetToastD','Back to Trainee with a clean record.'));
 };
 
 load();
+applyLang();
 renderRank();
 renderSoundBtn();
 document.addEventListener('pointerdown', e=>{
   if (!_voice || !_voice.paused || _voice.ended) return;
-  if (e.target.closest('#cmodal, .crow, .act, .cnext, .chip, #confirm, #soundbtn')) return;
+  if (e.target.closest('#cmodal, .crow, .act, .cnext, .chip, #confirm, #soundbtn, #langbtn')) return;
   _voice.play().catch(()=>{});
 }, true);
 splash().then(()=>{

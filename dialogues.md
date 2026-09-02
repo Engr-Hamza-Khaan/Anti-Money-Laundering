@@ -2,8 +2,9 @@
 
 Har line jo game mein typewriter (`say()`) se aati hai. Player choices, feedback, aur system bubbles is file mein nahi hain.
 
-MP3s: `assets/voice/`  
-Voices: Elena = `en-GB-SoniaNeural` · Marcus = `en-GB-RyanNeural` · Danish = `en-IN-PrabhatNeural`
+MP3s: `assets/voice/` (English) · `assets/voice/ur/` (Pakistani Urdu)  
+English: Elena = `en-GB-SoniaNeural` · Marcus = `en-GB-RyanNeural` · Danish = `en-IN-PrabhatNeural`  
+Urdu: Elena = `ur-PK-UzmaNeural` · Marcus = `ur-PK-AsadNeural` (slower/lower) · Danish = `ur-PK-AsadNeural` (faster/brighter)
 
 ---
 
