@@ -24,6 +24,7 @@ window.SENTINEL_UR = {
     viewCredential: 'کریڈینشل دیکھیں',
     printPdf: 'پرنٹ / پی ڈی ایف محفوظ کریں',
     skipSplash: 'چھوڑنے کے لیے کلک یا ٹیپ کریں',
+    chooseLang: 'زبان منتخب کریں',
     loading: 'اکیڈمی لوڈ ہو رہی ہے…',
     ready: 'تیار',
     splashEyebrow: 'ایس بی پی اے ایم ایل / سی ایف ٹی · ٹریننگ سمیولیشن',

@@ -659,8 +659,30 @@ body.splashing{overflow:hidden}
   font-size:13px;color:var(--text);letter-spacing:.12em;text-transform:uppercase;margin-top:8px;
   animation:splashFade .5s .18s ease both;
 }
+.splash-lang{
+  margin-top:22px;direction:ltr;cursor:default;
+  animation:splashFade .45s .2s ease both;
+}
+.splash-lang-lbl{
+  font-size:11.5px;color:var(--muted);letter-spacing:.08em;margin-bottom:10px;
+}
+body.lang-ur .splash-lang-lbl{letter-spacing:.02em;text-transform:none}
+.splash-lang-row{
+  display:inline-flex;border:1px solid var(--border);border-radius:999px;
+  background:rgba(255,255,255,.88);box-shadow:var(--shadow);overflow:hidden;
+}
+.splash-langbtn{
+  font-family:var(--sans);font-size:13.5px;font-weight:600;color:var(--muted);
+  background:transparent;border:0;padding:10px 22px;cursor:pointer;min-width:96px;
+  transition:background .18s,color .18s;
+}
+.splash-langbtn:hover{color:var(--ink);background:var(--panel2)}
+.splash-langbtn.on{
+  background:linear-gradient(135deg,var(--teal),#0B8F74);color:#fff;
+}
+.splash-langbtn[data-lang="ur"]{font-family:'Noto Nastaliq Urdu','IBM Plex Sans',sans-serif;font-size:15px;line-height:1.6}
 .splash-bar{
-  width:220px;height:4px;background:var(--panel3);border-radius:4px;overflow:hidden;margin-top:28px;
+  width:220px;height:4px;background:var(--panel3);border-radius:4px;overflow:hidden;margin-top:22px;
   animation:splashFade .45s .22s ease both;
 }
 .splash-bar i{
@@ -684,7 +706,7 @@ body.splashing{overflow:hidden}
   .splash-mark{width:76px;height:76px}
 }
 @media(prefers-reduced-motion:reduce){
-  .splash-mark,.splash-eyebrow,.splash-name,.splash-sub,.splash-bar,.splash-status,.splash-skip{animation:none}
+  .splash-mark,.splash-eyebrow,.splash-name,.splash-sub,.splash-lang,.splash-bar,.splash-status,.splash-skip{animation:none}
   #splash{transition:opacity .15s ease}
 }
 
@@ -763,6 +785,13 @@ img,svg,video{max-width:100%;height:auto}
     <div class="splash-eyebrow">SBP AML/CFT · Training simulation</div>
     <h1 class="splash-name">SENTINEL</h1>
     <p class="splash-sub">AML / KYC Academy</p>
+    <div class="splash-lang" id="splashlang" role="group" aria-labelledby="splashlanglbl">
+      <div class="splash-lang-lbl" id="splashlanglbl">Choose language</div>
+      <div class="splash-lang-row">
+        <button type="button" class="splash-langbtn on" data-lang="en" aria-pressed="true">English</button>
+        <button type="button" class="splash-langbtn" data-lang="ur" aria-pressed="false">اردو</button>
+      </div>
+    </div>
     <div class="splash-bar" aria-hidden="true"><i id="splashbar"></i></div>
     <p class="splash-status" id="splashstatus">Loading academy…</p>
   </div>
@@ -1646,8 +1675,26 @@ function applyLang(){
   if (splashSkip) splashSkip.textContent = t('skipSplash', 'Click or tap to skip');
   const splashStatus = document.getElementById('splashstatus');
   if (splashStatus && splashStatus.textContent) splashStatus.textContent = t('loading', 'Loading academy…');
+  const splashLangLbl = document.getElementById('splashlanglbl');
+  if (splashLangLbl) splashLangLbl.textContent = t('chooseLang', 'Choose language');
+  document.querySelectorAll('.splash-langbtn').forEach(b=>{
+    const on = b.dataset.lang === (ur ? 'ur' : 'en');
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
   renderSoundBtn();
   renderRank();
+}
+
+function setLang(lang, fromSplash){
+  S.lang = lang === 'ur' ? 'ur' : 'en';
+  save();
+  applyLang();
+  if (fromSplash) return;
+  stopVoice();
+  const skip = document.querySelector('.skipbtn');
+  if (skip) skip.click();
+  else if (!document.getElementById('splash')) home();
 }
 
 function load(){
@@ -1707,9 +1754,9 @@ function stopVoice(clearFile){
 function startVoiceEl(file){
   const a = new Audio(VOICE_BASE + vf(file));
   _voice = a;
-  const p = a.play();
-  if (p && p.catch) p.catch(()=>{});
   attachVoiceEvents(a);
+  const p = a.play();
+  if (p && p.catch) p.catch(()=>{ if (_onVoiceEnded) _onVoiceEnded(); });
   return a;
 }
 function attachVoiceEvents(audio){
@@ -1718,7 +1765,7 @@ function attachVoiceEvents(audio){
   audio.onerror = ()=>{ if (_onVoiceEnded) _onVoiceEnded(); };
 }
 function playVoice(file){
-  stopVoice(true);
+  killVoiceEl();
   _voiceFile = file || null;
   if (!file || S.muted) return null;
   return startVoiceEl(file);
@@ -1943,6 +1990,8 @@ let _typing = null;
 function say(name, text, opts){
   opts = opts || {};
   const host = opts.el || document.getElementById('bubbleslot');
+  if (!host) return Promise.resolve();
+  text = text == null ? '' : String(text);
   const speed = opts.speed == null ? 18 : opts.speed;
   return new Promise(resolve=>{
     const b = document.createElement('div');
@@ -1953,24 +2002,25 @@ function say(name, text, opts){
     const body = b.querySelector('.body');
     const caret = b.querySelector('.caret');
     const chunks = isUr() ? (text.match(/(\s+|[^\s]+)/g) || [text]) : null;
+    const n = chunks ? chunks.length : Math.max(1, text.length);
     let i = 0, settled = false, typed = false;
-    const audio = playVoice(opts.voice);
     let heard = !opts.voice || S.muted;
-    _onVoiceEnded = ()=>{ heard = true; maybeResolve(); };
-    attachVoiceEvents(audio);
+    let typeKick = null, voiceWatch = null;
 
+    const maybeResolve = ()=>{
+      if (settled || !typed || !heard) return;
+      settled = true;
+      _onVoiceEnded = null;
+      if (typeKick){ clearTimeout(typeKick); typeKick = null; }
+      if (voiceWatch){ clearTimeout(voiceWatch); voiceWatch = null; }
+      b.onclick = null;
+      resolve();
+    };
     const clearType = ()=>{
       if (_typing){ clearInterval(_typing); _typing = null; }
       body.textContent = text;
       if (caret && caret.parentNode) caret.remove();
       typed = true;
-    };
-    const maybeResolve = ()=>{
-      if (settled || !typed || !heard) return;
-      settled = true;
-      _onVoiceEnded = null;
-      b.onclick = null;
-      resolve();
     };
     const skip = ()=>{
       stopVoice(true);
@@ -1978,34 +2028,36 @@ function say(name, text, opts){
       clearType();
       maybeResolve();
     };
+
+    _onVoiceEnded = ()=>{ heard = true; maybeResolve(); };
+    const audio = playVoice(opts.voice);
     b.onclick = skip;
+
     const startTyping = ms => {
       if (typed || _typing) return;
       if (ms === 0){ clearType(); maybeResolve(); return; }
-      const units = chunks || null;
-      const n = units ? units.length : text.length;
+      const step = Math.max(10, Math.min(42, ms || speed));
       _typing = setInterval(()=>{
         if (!b.isConnected){ skip(); return; }
         i++;
-        body.textContent = units ? units.slice(0, i).join('') : text.slice(0, i);
+        body.textContent = chunks ? chunks.slice(0, i).join('') : text.slice(0, i);
         if (i >= n){
           if (_typing){ clearInterval(_typing); _typing = null; }
           if (caret && caret.parentNode) caret.remove();
           typed = true;
           maybeResolve();
         }
-      }, ms);
-      activeTimers.push(_typing);
+      }, step);
     };
     if (audio){
       const kick = ()=>{
-        const dur = (audio.duration || 0) * 1000;
-        const n = chunks ? chunks.length : text.length;
-        startTyping(dur > 0 ? Math.max(10, dur / Math.max(1,n)) : speed);
+        const dur = (Number.isFinite(audio.duration) ? audio.duration : 0) * 1000;
+        startTyping(dur > 0 ? dur / n : speed);
       };
       if (audio.readyState >= 1) kick();
       else audio.addEventListener('loadedmetadata', kick, {once:true});
-      setTimeout(()=>startTyping(speed), 450);
+      typeKick = setTimeout(()=>startTyping(speed), 280);
+      voiceWatch = setTimeout(()=>{ heard = true; maybeResolve(); }, 18000);
     } else {
       startTyping(speed);
     }
@@ -3016,12 +3068,26 @@ function splash(){
     };
 
     const onKey = e=>{
+      if (e.target.closest && e.target.closest('.splash-lang')) return;
       if (e.key==='Enter' || e.key===' ' || e.key==='Escape'){
         e.preventDefault();
         finish();
       }
     };
-    el.addEventListener('click', finish);
+    const langBox = document.getElementById('splashlang');
+    if (langBox){
+      langBox.addEventListener('click', e=>{
+        e.stopPropagation();
+        const btn = e.target.closest('.splash-langbtn');
+        if (!btn) return;
+        setLang(btn.dataset.lang, true);
+        beep('pick');
+      });
+    }
+    el.addEventListener('click', e=>{
+      if (e.target.closest('.splash-lang')) return;
+      finish();
+    });
     document.addEventListener('keydown', onKey);
 
     keys.forEach(k=>{
@@ -3057,15 +3123,7 @@ document.getElementById('soundbtn').onclick = ()=>{
     if (!unmuteVoice()) beep('pick');
   }
 };
-document.getElementById('langbtn').onclick = ()=>{
-  S.lang = isUr() ? 'en' : 'ur';
-  save();
-  applyLang();
-  stopVoice();
-  const skip = document.querySelector('.skipbtn');
-  if (skip) skip.click();
-  else if (!document.getElementById('splash')) home();
-};
+document.getElementById('langbtn').onclick = ()=> setLang(isUr() ? 'en' : 'ur');
 document.getElementById('resetbtn').onclick = ()=>{
   if (!confirm(t('resetConfirm','Reset all progress — XP, ranks, badges and best scores?'))) return;
   S = {xp:0, best:{}, badges:[], seen:[], muted:S.muted, seenIntro:true, lang:S.lang};
