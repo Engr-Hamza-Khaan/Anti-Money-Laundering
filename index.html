@@ -56,7 +56,7 @@ body{
 h1,h2,h3,h4{color:var(--ink)}
 #fx{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5}
 #confetti{position:fixed;inset:0;z-index:90;pointer-events:none}
-#app{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column}
+#app{position:relative;z-index:4;min-height:100vh;display:flex;flex-direction:column}
 
 /* ---------------- top bar ---------------- */
 .topbar{
@@ -98,7 +98,7 @@ body.lang-ur{
 }
 body.lang-ur .cbubble{line-height:2.05;font-size:17px}
 body.lang-ur .crow{text-align:right;line-height:1.9}
-body.lang-ur .hero h1,body.lang-ur .sechead h2,body.lang-ur .mcard h3,body.lang-ur .mhead h2{line-height:1.55}
+body.lang-ur .hero h1,body.lang-ur .sechead h2,body.lang-ur .mcard h3,body.lang-ur .mhead h2,body.lang-ur .mhead .back{line-height:1.55}
 body.lang-ur .eyebrow,body.lang-ur .cbubble .who,body.lang-ur .mcard .mk,body.lang-ur .mhead .tag,
 body.lang-ur .hudpill .lbl,body.lang-ur .stat .l,body.lang-ur .brand-txt .t,body.lang-ur .cprompt{
   text-transform:none;letter-spacing:.02em;
@@ -106,6 +106,12 @@ body.lang-ur .hudpill .lbl,body.lang-ur .stat .l,body.lang-ur .brand-txt .t,body
 body.lang-ur .cnext svg,body.lang-ur .play svg,body.lang-ur .back svg{transform:scaleX(-1)}
 body.lang-ur .drow .v{text-align:left}
 @media(max-width:560px){body.lang-ur .drow .v{text-align:right}}
+/* Nastaliq glyphs overflow a 1.25 line box, so rank name painted over XP. */
+body.lang-ur .rankchip{padding:8px 16px 8px 8px}
+body.lang-ur .rankchip > div{display:flex;flex-direction:column;gap:6px;min-width:0}
+body.lang-ur .rankchip .rk,body.lang-ur .rankchip .xp{line-height:1.75}
+body.lang-ur .rankchip .xp{font-family:var(--sans)}
+body.lang-ur .xpbar{margin-top:2px}
 
 /* ---------------- stage ---------------- */
 #stage{flex:1;width:100%;max-width:1180px;margin:0 auto;padding:30px 22px 70px}
@@ -145,11 +151,16 @@ body.lang-ur .drow .v{text-align:left}
   background:linear-gradient(135deg,#FFFFFF 0%,#F3F8FD 60%,#EAF3FB 100%);
   border:1px solid var(--line);border-radius:18px;padding:26px 24px;
   box-shadow:var(--shadow);display:flex;flex-direction:column;
+  text-align:center;align-items:center;justify-content:center;
 }
 .achieve-box h2{font-size:17px;font-weight:600;letter-spacing:-.01em}
 .achieve-box .d{font-size:12.5px;color:var(--muted);margin-top:3px;margin-bottom:16px}
-.achieve-box .badgerow{margin-top:0;justify-content:flex-start}
-.achieve-box .btn{margin-top:auto;align-self:flex-start}
+.achieve-box .badgerow{
+  margin-top:0;width:100%;
+  display:grid;grid-template-columns:repeat(2,76px);
+  justify-content:center;justify-items:center;gap:16px 28px;
+}
+.achieve-box .btn{margin-top:18px;align-self:center}
 @media(max-width:900px){.home-top{grid-template-columns:1fr}}
 
 /* ---------------- section head ---------------- */
@@ -213,7 +224,7 @@ body.lang-ur .drow .v{text-align:left}
 
 /* mission chrome */
 .mhead{display:flex;align-items:center;gap:14px;margin-bottom:20px;flex-wrap:wrap}
-.mhead .back{cursor:pointer;color:var(--muted);font-size:13px;display:flex;align-items:center;gap:6px;border:1px solid var(--border);background:var(--panel);padding:8px 13px;border-radius:8px;transition:.18s}
+.mhead .back{cursor:pointer;color:var(--muted);font-family:var(--sans);font-size:13px;display:flex;align-items:center;gap:6px;border:1px solid var(--border);background:var(--panel);padding:8px 13px;border-radius:8px;transition:.18s}
 .mhead .back:hover{color:var(--text);border-color:var(--border2)}
 .mhead h2{font-size:18px;font-weight:600}
 .mhead .tag{font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
@@ -535,7 +546,7 @@ body.lang-ur .drow .v{text-align:left}
 .cine-scrim{position:absolute;inset:0;
   background:linear-gradient(180deg,rgba(244,249,253,.55) 0%,rgba(244,249,253,.20) 35%,rgba(227,238,247,.72) 100%)}
 
-#actors{position:fixed;inset:0;z-index:3;pointer-events:none;overflow:hidden}
+#actors{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden}
 .actor{position:absolute;bottom:0;height:74vh;max-height:640px;width:auto;
   opacity:0;transition:opacity .35s ease,transform .45s cubic-bezier(.2,.9,.3,1);
   filter:drop-shadow(0 18px 34px rgba(16,32,47,.22))}
@@ -543,7 +554,13 @@ body.lang-ur .drow .v{text-align:left}
 .actor.right{right:2vw;transform:translateX(60px)}
 .actor.in{opacity:1;transform:translateX(0)}
 .actor.idle{animation:float 4s ease-in-out infinite}
+.actor.home-hero{bottom:0;}
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+body.lang-ur .actor.left{left:auto;right:2vw;transform:translateX(60px) scaleX(-1)}
+body.lang-ur .actor.right{right:auto;left:2vw;transform:translateX(-60px) scaleX(-1)}
+body.lang-ur .actor.in{transform:translateX(0) scaleX(-1)}
+body.lang-ur .actor.idle{animation-name:float-ur}
+@keyframes float-ur{0%,100%{transform:translateY(0) scaleX(-1)}50%{transform:translateY(-6px) scaleX(-1)}}
 @media(max-width:900px){.actor{height:42vh;opacity:.35!important}}
 
 /* speech bubble */
@@ -595,6 +612,8 @@ body.lang-ur .drow .v{text-align:left}
 .cnext:hover{filter:brightness(1.06);transform:translateY(-1px)}
 .cnext svg{width:14px;height:14px;flex:none}
 #ctaslot{display:flex;justify-content:flex-end;width:100%}
+#ctaslot.cta-mid{justify-content:center}
+#ctaslot.cta-mid .cnext{margin-left:0}
 #ctaslot .cnext,#startbtn{margin-right:0}
 
 /* countdown ring */
@@ -608,15 +627,23 @@ body.lang-ur .drow .v{text-align:left}
   font-family:var(--mono);font-size:17px;font-weight:600;color:var(--ink)}
 .ring.danger .lbl{color:var(--coral)}
 
-/* scene-mode screens sit above the cinematic layer */
-body.scene #stage{position:relative;z-index:2;max-width:1180px}
+/* scene-mode: content sits between sprites; characters paint above the box */
+body.scene #app{z-index:auto}
+body.scene .topbar{z-index:120}
+body.scene #actors{z-index:50}
+body.scene #stage{
+  position:relative;z-index:2;max-width:1180px;
+  padding-inline:clamp(24px,16vw,220px);
+}
+body.scene .screen > .panel{margin-inline:auto;width:100%}
 body.scene .panel,body.scene .hudpill,body.scene .mhead .back{
   background:rgba(255,255,255,.88);backdrop-filter:blur(14px)}
-.skipbtn{position:fixed;right:20px;bottom:20px;z-index:130;background:rgba(255,255,255,.9);
+.skipbtn{position:fixed;bottom:20px;right:20px;z-index:130;background:rgba(255,255,255,.9);
   backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:30px;
   padding:9px 18px;font-family:var(--sans);font-size:12.5px;font-weight:600;color:var(--muted);
-  cursor:pointer;box-shadow:var(--shadow)}
+  cursor:pointer;box-shadow:var(--shadow);display:flex;align-items:center;gap:6px}
 .skipbtn:hover{color:var(--ink)}
+body.lang-ur .skipbtn{right:auto;left:20px}
 
 /* ---------------- splash ---------------- */
 body.splashing{overflow:hidden}
@@ -663,17 +690,40 @@ body.splashing{overflow:hidden}
   margin-top:22px;direction:ltr;cursor:default;
   animation:splashFade .45s .2s ease both;
 }
+.splash-lang-hint{margin-bottom:12px}
+.splash-lang-arrow{
+  display:block;width:10px;height:10px;margin:0 auto 8px;
+  border-right:2.5px solid var(--teal);border-bottom:2.5px solid var(--teal);
+  transform:rotate(45deg);
+  animation:langPoint .9s ease-in-out infinite;
+}
 .splash-lang-lbl{
-  font-size:11.5px;color:var(--muted);letter-spacing:.08em;margin-bottom:10px;
+  font-size:14px;font-weight:700;color:var(--ink);letter-spacing:.04em;margin-bottom:2px;
+}
+.splash-lang-lbl2{
+  font-family:'Noto Nastaliq Urdu','IBM Plex Sans',sans-serif;
+  font-size:15px;font-weight:600;color:var(--teal);line-height:2;margin-bottom:4px;
 }
 body.lang-ur .splash-lang-lbl{letter-spacing:.02em;text-transform:none}
 .splash-lang-row{
-  display:inline-flex;border:1px solid var(--border);border-radius:999px;
-  background:rgba(255,255,255,.88);box-shadow:var(--shadow);overflow:hidden;
+  display:inline-flex;border:1px solid color-mix(in srgb,var(--teal) 45%,var(--border));
+  border-radius:999px;
+  background:rgba(255,255,255,.88);box-shadow:var(--shadow);
+  overflow:hidden;animation:langPulse 1.7s ease-in-out infinite;
+}
+.splash-lang.picked .splash-lang-arrow{animation:none;opacity:.3}
+.splash-lang.picked .splash-lang-row{animation:none;border-color:var(--border)}
+@keyframes langPoint{
+  0%,100%{transform:translateY(0) rotate(45deg);opacity:1}
+  50%{transform:translateY(6px) rotate(45deg);opacity:.55}
+}
+@keyframes langPulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(15,169,138,.28),var(--shadow)}
+  50%{box-shadow:0 0 0 8px rgba(15,169,138,.08),var(--shadow)}
 }
 .splash-langbtn{
   font-family:var(--sans);font-size:13.5px;font-weight:600;color:var(--muted);
-  background:transparent;border:0;padding:10px 22px;cursor:pointer;min-width:96px;
+  background:transparent;border:0;padding:12px 22px;cursor:pointer;min-width:108px;min-height:44px;
   transition:background .18s,color .18s;
 }
 .splash-langbtn:hover{color:var(--ink);background:var(--panel2)}
@@ -693,11 +743,19 @@ body.lang-ur .splash-lang-lbl{letter-spacing:.02em;text-transform:none}
 .splash-status{
   font-family:var(--mono);font-size:11px;color:var(--text);letter-spacing:.08em;margin-top:12px;
   animation:splashFade .45s .26s ease both;
+  border:0;background:transparent;padding:0;cursor:default;
 }
+.splash-status.is-go{
+  cursor:pointer;font-family:var(--sans);font-weight:600;font-size:15px;letter-spacing:0;
+  color:#fff;margin-top:18px;padding:12px 28px;border-radius:9px;
+  background:linear-gradient(135deg,var(--teal),#0B8F74);box-shadow:var(--shadow);
+  min-width:140px;min-height:44px;
+}
+.splash-status.is-go:hover{filter:brightness(1.09)}
+.splash-status.is-go:disabled{opacity:.4;cursor:default;filter:none}
+body.lang-ur .splash-status.is-go{font-size:17px;line-height:1.8}
 .splash-skip{
-  position:absolute;bottom:max(28px, env(safe-area-inset-bottom));
-  font-size:12.5px;color:var(--text);z-index:1;
-  animation:splashFade .45s .4s ease both;
+  display:none;
 }
 @keyframes splashPop{from{opacity:0;transform:scale(.82)}to{opacity:1;transform:none}}
 @keyframes splashFade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -707,6 +765,7 @@ body.lang-ur .splash-lang-lbl{letter-spacing:.02em;text-transform:none}
 }
 @media(prefers-reduced-motion:reduce){
   .splash-mark,.splash-eyebrow,.splash-name,.splash-sub,.splash-lang,.splash-bar,.splash-status,.splash-skip{animation:none}
+  .splash-lang-arrow,.splash-lang-row{animation:none}
   #splash{transition:opacity .15s ease}
 }
 
@@ -720,7 +779,7 @@ img,svg,video{max-width:100%;height:auto}
   .brand-txt .n{font-size:13px;letter-spacing:.1em}
   .xpbar{width:84px}
   #stage{padding:16px 14px 88px}
-  body.scene #stage{max-width:100%}
+  body.scene #stage{max-width:100%;padding-inline:14px}
   .sechead{padding:14px 14px 14px 18px;margin:16px 0 14px}
   .sechead h2{font-size:20px}
   .hero{padding:20px 16px}
@@ -730,6 +789,8 @@ img,svg,video{max-width:100%;height:auto}
   .crow{padding:12px 14px;font-size:14px;min-height:48px}
   .actor{height:34vh;max-height:260px;opacity:.26!important}
   .actor.left{left:-8vw}.actor.right{right:-8vw}
+  body.lang-ur .actor.left{left:auto;right:-8vw}
+  body.lang-ur .actor.right{right:auto;left:-8vw}
   .cmodal{padding:12px;align-items:end}
   .cmodal-card{width:100%;max-width:100%;min-width:0;padding:18px 16px 16px;border-radius:16px 16px 12px 12px}
   .cmodal-foot .cnext{min-width:0;width:100%}
@@ -739,7 +800,8 @@ img,svg,video{max-width:100%;height:auto}
   .mhead h2{font-size:16px}
   .flagcard{padding:18px 16px;min-height:0}
   .flagcard .txt{font-size:15px}
-  .skipbtn{right:12px;bottom:max(12px,env(safe-area-inset-bottom))}
+  .skipbtn{bottom:max(12px,env(safe-area-inset-bottom));right:12px}
+  body.lang-ur .skipbtn{right:auto;left:12px}
   .iconbtn{width:40px;height:40px}
   .panel{padding:16px}
   .mgrid{grid-template-columns:1fr}
@@ -786,14 +848,18 @@ img,svg,video{max-width:100%;height:auto}
     <h1 class="splash-name">SENTINEL</h1>
     <p class="splash-sub">AML / KYC Academy</p>
     <div class="splash-lang" id="splashlang" role="group" aria-labelledby="splashlanglbl">
-      <div class="splash-lang-lbl" id="splashlanglbl">Choose language</div>
+      <div class="splash-lang-hint">
+        <span class="splash-lang-arrow" aria-hidden="true"></span>
+        <div class="splash-lang-lbl" id="splashlanglbl">Select your language</div>
+        <div class="splash-lang-lbl2">اپنی زبان منتخب کریں</div>
+      </div>
       <div class="splash-lang-row">
-        <button type="button" class="splash-langbtn on" data-lang="en" aria-pressed="true">English</button>
+        <button type="button" class="splash-langbtn" data-lang="en" aria-pressed="false">English</button>
         <button type="button" class="splash-langbtn" data-lang="ur" aria-pressed="false">اردو</button>
       </div>
     </div>
     <div class="splash-bar" aria-hidden="true"><i id="splashbar"></i></div>
-    <p class="splash-status" id="splashstatus">Loading academy…</p>
+    <button type="button" class="splash-status" id="splashstatus" disabled>Loading academy…</button>
   </div>
   <p class="splash-skip">Click or tap to skip</p>
 </div>
@@ -1548,10 +1614,10 @@ const MISSIONS = [
   {id:'radar', k:'Module 02', n:'Red-Flag Radar', icon:'radar', c:'#E39A0C', hidden:true,
    d:'Timed pattern recognition. Each observation belongs to one Annexure-II red-flag family — sort it before the clock runs out.',
    meta:'Timed arcade \u00b7 10 rounds'},
-  {id:'console', k:'Module 03', n:'Review Console', icon:'console', c:'#0FA98A',
+  {id:'console', k:'Module 02', n:'Review Console', icon:'console', c:'#0FA98A',
    d:'The capstone. Nine live transactions: clear, flag or escalate — and justify the call by naming the indicator you acted on.',
    meta:'Case queue \u00b7 9 transactions'},
-  {id:'thresholds', k:'Module 04', n:'Threshold Trainer', icon:'gauge', c:'#8B5CF6',
+  {id:'thresholds', k:'Module 03', n:'Threshold Trainer', icon:'gauge', c:'#8B5CF6',
    d:'Rapid fire on the numbers that never move: CTR at 2 million, walk-in verification at 500,000, STR at any amount at all.',
    meta:'Rule drill \u00b7 12 rounds'},
   {id:'vault', k:'Reference', n:'Reference Vault', icon:'vault', c:'#C9962C',
@@ -1560,7 +1626,7 @@ const MISSIONS = [
 ];
 
 const KEY = 'sentinel_aml_v1';
-let S = {xp:0, best:{}, badges:[], seen:[], muted:false, seenIntro:false, lang:'en'};
+let S = {xp:0, best:{}, badges:[], seen:[], muted:false, seenIntro:false, lang:'en', langChosen:false, screen:'home'};
 
 function isUr(){ return S.lang === 'ur'; }
 function UR(){ return window.SENTINEL_UR || {}; }
@@ -1674,20 +1740,27 @@ function applyLang(){
   const splashSkip = document.querySelector('.splash-skip');
   if (splashSkip) splashSkip.textContent = t('skipSplash', 'Click or tap to skip');
   const splashStatus = document.getElementById('splashstatus');
-  if (splashStatus && splashStatus.textContent) splashStatus.textContent = t('loading', 'Loading academy…');
-  const splashLangLbl = document.getElementById('splashlanglbl');
-  if (splashLangLbl) splashLangLbl.textContent = t('chooseLang', 'Choose language');
-  document.querySelectorAll('.splash-langbtn').forEach(b=>{
-    const on = b.dataset.lang === (ur ? 'ur' : 'en');
-    b.classList.toggle('on', on);
-    b.setAttribute('aria-pressed', on ? 'true' : 'false');
-  });
+  if (splashStatus){
+    splashStatus.textContent = splashStatus.classList.contains('is-go')
+      ? t('ready','Ready')
+      : t('loading', 'Loading academy…');
+  }
+  const splashLang = document.getElementById('splashlang');
+  if (splashLang && splashLang.classList.contains('picked')){
+    document.querySelectorAll('.splash-langbtn').forEach(b=>{
+      const on = b.dataset.lang === (ur ? 'ur' : 'en');
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+  }
   renderSoundBtn();
   renderRank();
+  if ((S.langChosen || S.seenIntro) && typeof prefetchVoices === 'function') prefetchVoices();
 }
 
 function setLang(lang, fromSplash){
   S.lang = lang === 'ur' ? 'ur' : 'en';
+  if (fromSplash) S.langChosen = true;
   save();
   applyLang();
   if (fromSplash) return;
@@ -1700,6 +1773,8 @@ function setLang(lang, fromSplash){
 function load(){
   try{ const r = localStorage.getItem(KEY); if (r) S = Object.assign(S, JSON.parse(r)); }catch(e){}
   if (S.lang !== 'ur') S.lang = 'en';
+  if (S.seenIntro) S.langChosen = true;
+  if (!S.screen) S.screen = 'home';
 }
 function save(){
   try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){}
@@ -1732,17 +1807,74 @@ function awardBadge(id){
 
 /* ---- sound (WebAudio beeps + MP3 voice) ---- */
 const VOICE_BASE = 'assets/voice/';
+const VOICE_FILES = [
+  '01-intro-elena.mp3','02-intro-marcus.mp3',
+  '03-onboard-brief-elena-1.mp3','04-onboard-brief-elena-2.mp3',
+  '05-onboard-danish-identify.mp3','06-onboard-danish-verify.mp3',
+  '07-onboard-danish-ownership-1.mp3','08-onboard-danish-ownership-2.mp3',
+  '09-onboard-danish-risk.mp3','10-onboard-danish-edd.mp3',
+  '11-onboard-danish-tipping.mp3','12-onboard-danish-monitor.mp3',
+  '13-onboard-danish-restricted.mp3','14-onboard-danish-whatnext.mp3',
+  '15-radar-brief-marcus-1.mp3','16-radar-brief-marcus-2.mp3',
+  '17-console-brief-elena-1.mp3','18-console-brief-elena-2.mp3',
+  '19-thresholds-brief-elena-1.mp3','20-thresholds-brief-elena-2.mp3'
+];
 let AC = null;
 let _voice = null;
 let _voiceFile = null;
 let _onVoiceEnded = null;
+const _voiceBlob = Object.create(null);
+let _prefetchLang = null;
 
+function voiceUrl(file){ return VOICE_BASE + vf(file); }
+function voiceSrc(file){
+  const url = voiceUrl(file);
+  return _voiceBlob[url] || url;
+}
+function prefetchVoice(file){
+  if (!file) return;
+  const url = voiceUrl(file);
+  if (_voiceBlob[url] || _voiceBlob[url + ':p']) return;
+  _voiceBlob[url + ':p'] = 1;
+  fetch(url).then(r=>{
+    if (!r.ok) throw 0;
+    return r.blob();
+  }).then(b=>{
+    _voiceBlob[url] = URL.createObjectURL(b);
+  }).catch(()=>{ delete _voiceBlob[url + ':p']; });
+}
+function prefetchVoices(files){
+  const lang = isUr() ? 'ur' : 'en';
+  const list = files && files.length ? files : VOICE_FILES;
+  if (!files){
+    if (_prefetchLang === lang) return;
+    _prefetchLang = lang;
+  }
+  list.forEach(prefetchVoice);
+}
+function getVoiceEl(){
+  if (!_voice){
+    _voice = new Audio();
+    _voice.preload = 'auto';
+    _voice.setAttribute('playsinline', '');
+  }
+  return _voice;
+}
+function unlockAudio(){
+  try{
+    AC = AC || new (window.AudioContext||window.webkitAudioContext)();
+    if (AC.state === 'suspended') AC.resume();
+  }catch(e){}
+}
+function primeVoice(file){
+  unlockAudio();
+  prefetchVoice(file);
+}
 function killVoiceEl(){
   if (!_voice) return;
   _voice.onended = null;
   _voice.onerror = null;
-  try { _voice.pause(); _voice.src = ''; } catch(e){}
-  _voice = null;
+  try { _voice.pause(); } catch(e){}
 }
 function stopVoice(clearFile){
   killVoiceEl();
@@ -1752,11 +1884,23 @@ function stopVoice(clearFile){
   }
 }
 function startVoiceEl(file){
-  const a = new Audio(VOICE_BASE + vf(file));
-  _voice = a;
+  const a = getVoiceEl();
   attachVoiceEvents(a);
+  const clip = vf(file);
+  const src = voiceSrc(file);
+  if (a.dataset.clip !== clip){
+    a.src = src;
+    a.dataset.clip = clip;
+  } else {
+    try { a.currentTime = 0; } catch(e){}
+  }
   const p = a.play();
-  if (p && p.catch) p.catch(()=>{ if (_onVoiceEnded) _onVoiceEnded(); });
+  if (p && p.then){
+    p.then(()=>{ a.dataset.armed = '1'; }).catch(err=>{
+      if (err && err.name === 'NotAllowedError') return;
+      if (_onVoiceEnded) _onVoiceEnded();
+    });
+  }
   return a;
 }
 function attachVoiceEvents(audio){
@@ -1765,6 +1909,20 @@ function attachVoiceEvents(audio){
   audio.onerror = ()=>{ if (_onVoiceEnded) _onVoiceEnded(); };
 }
 function playVoice(file){
+  prefetchVoice(file);
+  if (file && _voiceFile === file && _voice && !_voice.ended && _voice.dataset.clip === vf(file)){
+    attachVoiceEvents(_voice);
+    if (_voice.paused){
+      const p = _voice.play();
+      if (p && p.then){
+        p.then(()=>{ _voice.dataset.armed = '1'; }).catch(err=>{
+          if (err && err.name === 'NotAllowedError') return;
+          if (_onVoiceEnded) _onVoiceEnded();
+        });
+      }
+    }
+    return _voice;
+  }
   killVoiceEl();
   _voiceFile = file || null;
   if (!file || S.muted) return null;
@@ -1868,7 +2026,7 @@ function openModal(html){
 }
 function missionHead(m, hud){
   return `<div class="mhead">
-    <button class="back" id="backbtn">${icon('back')} ${t('academy','Academy')}</button>
+    <button class="back" id="backbtn">${icon('back')} ${t('backAcademy','Back to academy')}</button>
     <div><div class="tag" style="color:${m.c}">${m.k}</div><h2>${lu(m,'n')}</h2></div>
     <div class="mhead-spacer"></div>
     ${hud||''}
@@ -1876,7 +2034,31 @@ function missionHead(m, hud){
 }
 function bindBack(){
   const b = document.getElementById('backbtn');
-  if (b) b.onclick = home;
+  if (b) b.onclick = ()=>{ beep('pick'); home(); };
+}
+function setScreen(id){
+  if (S.screen === id) return;
+  S.screen = id;
+  save();
+}
+function resumeApp(){
+  const scored = ()=> MISSIONS.filter(m=>m.id!=='vault' && !m.hidden);
+  const map = {
+    home,
+    onboarding: missionOnboarding,
+    radar: missionRadar,
+    console: missionConsole,
+    thresholds: missionThresholds,
+    vault: screenVault,
+    cert(){
+      const list = scored();
+      const done = list.filter(m=>S.best[m.id]!=null).length;
+      const avg = done === list.length && list.length
+        ? Math.round(list.reduce((a,m)=>a+S.best[m.id],0)/list.length) : 0;
+      screenCertificate(avg);
+    }
+  };
+  (map[S.screen] || home)();
 }
 function grade(pct){
   const g = UR().ui && UR().ui.grade;
@@ -2031,7 +2213,14 @@ function say(name, text, opts){
 
     _onVoiceEnded = ()=>{ heard = true; maybeResolve(); };
     const audio = playVoice(opts.voice);
-    b.onclick = skip;
+    b.onclick = ()=>{
+      if (audio && audio.paused && !audio.ended){
+        unlockAudio();
+        audio.play().catch(()=>skip());
+        return;
+      }
+      skip();
+    };
 
     const startTyping = ms => {
       if (typed || _typing) return;
@@ -2050,14 +2239,27 @@ function say(name, text, opts){
       }, step);
     };
     if (audio){
+      let started = false;
       const kick = ()=>{
         const dur = (Number.isFinite(audio.duration) ? audio.duration : 0) * 1000;
-        startTyping(dur > 0 ? dur / n : speed);
+        if (dur > 0) startTyping(dur / n);
       };
-      if (audio.readyState >= 1) kick();
-      else audio.addEventListener('loadedmetadata', kick, {once:true});
-      typeKick = setTimeout(()=>startTyping(speed), 280);
-      voiceWatch = setTimeout(()=>{ heard = true; maybeResolve(); }, 18000);
+      audio.addEventListener('loadedmetadata', kick, {once:true});
+      audio.addEventListener('durationchange', kick, {once:true});
+      if (audio.dataset.clip === vf(opts.voice) && audio.readyState >= 1 && Number.isFinite(audio.duration) && audio.duration > 0) kick();
+      typeKick = setTimeout(()=>startTyping(speed), 500);
+      const onStart = ()=>{
+        if (started) return;
+        started = true;
+        if (voiceWatch){ clearTimeout(voiceWatch); voiceWatch = null; }
+        const dur = (Number.isFinite(audio.duration) ? audio.duration : 0) * 1000;
+        if (dur > 0) voiceWatch = setTimeout(()=>{ heard = true; maybeResolve(); }, dur + 2500);
+      };
+      audio.addEventListener('playing', onStart, {once:true});
+      if (!audio.paused) onStart();
+      voiceWatch = setTimeout(()=>{
+        if (!started){ heard = true; maybeResolve(); }
+      }, 3500);
     } else {
       startTyping(speed);
     }
@@ -2097,6 +2299,7 @@ function brief(m, bgKey, artKey, name, lines){
     bindBack();
     const nav = _nav;
     (async ()=>{
+      prefetchVoices(lines.map(line => line && line.v).filter(Boolean));
       for (const line of lines){
         if (nav !== _nav) return;
         const text = typeof line === 'string' ? line : (isUr() && line.tUr ? line.tUr : line.t);
@@ -2146,9 +2349,10 @@ function home(){
   setKeys(null);
   const skip = document.querySelector('.skipbtn');
   if (skip){ skip.click(); return; }
+  setScreen('home');
   clearActors();
   setScene('bg-skyline');
-  actor('elena-explain','right');
+  actor('elena-explain','right').el.classList.add('home-hero');
   const scored = MISSIONS.filter(m=>m.id!=='vault' && !m.hidden);
   const done = scored.filter(m=>S.best[m.id]!=null).length;
   const allDone = done === scored.length;
@@ -2272,6 +2476,7 @@ function results(o){
    MODULE 01 — CUSTOMER ONBOARDING (branching CDD dialogue)
    ===================================================================== */
 function missionOnboarding(){
+  setScreen('onboarding');
   const m = MISSIONS.find(x=>x.id==='onboarding');
   const P = DIALOGUE.persona;
   let custA = null;
@@ -2298,7 +2503,7 @@ function missionOnboarding(){
       <div class="cdd-steps">
         ${CDD_STEPS.map((s,ix)=>`<div class="cdd-step ${ix===b.step?'on':ix<b.step?'done':''}">${ix+1}. ${cddStep(ix)}</div>`).join('')}
       </div>
-      <div class="panel" style="max-width:min(100%,760px);margin-left:auto">
+      <div class="panel" style="max-width:min(100%,640px)">
         <div class="hud-row">
           <div>
             <div style="font-size:15px;font-weight:600;color:var(--ink)">${P.name}</div>
@@ -2325,6 +2530,8 @@ function missionOnboarding(){
     bindBack();
     if (custA) custA.mood('cust-foreign');
     const nav = _nav;
+    prefetchVoice(b.voice);
+    if (seq[i+1] && seq[i+1].voice) prefetchVoice(seq[i+1].voice);
     (async ()=>{
       await say(P.name, lu(b,'say'), {voice:b.voice});
       if (nav !== _nav) return;
@@ -2399,7 +2606,7 @@ function missionOnboarding(){
   }
 
   brief(m, 'bg-branch', 'elena-explain', speakerElena(), [
-    {t:'There is a new relationship waiting at the counter. Your job is customer due diligence: identify them, verify the identity against a reliable source, establish who really owns the business, and then decide how much scrutiny this file needs.', tUr:'کاؤنٹر پر ایک نیا رشتہ انتظار کر رہا ہے۔ آپ کا کام کسٹمر ڈیو ڈیلیجنس ہے: ان کی شناخت کریں، شناخت کا کسی قابلِ اعتماد ذریعے سے ویریفائی کریں، یہ طے کریں کہ کاروبار کا اصل مالک کون ہے، اور پھر فیصلہ کریں کہ اس فائل پر کتنی جانچ چاہیے۔', v:'03-onboard-brief-elena-1.mp3'},
+    {t:'There is a new customer waiting at the counter. Your job is customer due diligence: identify them, verify the identity against a reliable source, establish who really owns the business, and then decide how much scrutiny this file needs.', tUr:'کاؤنٹر پر ایک نیا کسٹمر انتظار کر رہا ہے۔ آپ کا کام کسٹمر ڈیو ڈیلیجنس ہے: ان کی شناخت کریں، شناخت کا کسی قابلِ اعتماد ذریعے سے ویریفائی کریں، یہ طے کریں کہ کاروبار کا اصل مالک کون ہے، اور پھر فیصلہ کریں کہ اس فائل پر کتنی جانچ چاہیے۔', v:'03-onboard-brief-elena-1.mp3'},
     {t:'The customer will be helpful right up to the moment you ask something inconvenient. Remember that rapport is not what the file is judged on.', tUr:'کسٹمر اس لمحے تک مددگار رہے گا جب تک آپ کچھ ناگوار نہ پوچھیں۔ یاد رکھیں — فائل پر فیصلہ رپورٹ سے ہوتا ہے، دوستانہ رویے سے نہیں۔', v:'04-onboard-brief-elena-2.mp3'}
   ]).then(()=>{
     clearActors();
@@ -2413,6 +2620,7 @@ function missionOnboarding(){
    MODULE 02 — RED-FLAG RADAR (timed category sorting)
    ===================================================================== */
 function missionRadar(){
+  setScreen('radar');
   const m = MISSIONS.find(x=>x.id==='radar');
   const ROUNDS = 10, LIMIT = 18;
   const deck = shuffle(FLAGS).slice(0, ROUNDS);
@@ -2429,7 +2637,7 @@ function missionRadar(){
         <div class="hudpill"><span class="lbl">${t('round','Round')}</span><b>${i+1}/${ROUNDS}</b></div>
         <div class="hudpill"><span class="lbl">${t('hits','Hits')}</span><b style="color:var(--teal)">${correct}</b></div>
         <div class="hudpill"><span class="lbl">${t('combo','Combo')}</span><b class="combo" id="combo">\u00d7${combo||1}</b></div>`)}
-      <div class="panel" style="max-width:min(100%,780px);margin-left:auto">
+      <div class="panel" style="max-width:min(100%,640px)">
         <div class="hud-row">
           ${ringHTML('tring')}
           <div class="flagcard" style="flex:1;margin:0">
@@ -2446,16 +2654,16 @@ function missionRadar(){
     choices(catKeys.map((k,ix)=>({t:lu(CATS[k],'name'), ic:k})), {prompt:t('whichFamily','Which red-flag family is this?')})
       .then(ix=>{ const k = catKeys[ix]; pick(k, document.querySelector(`#crows .crow[data-i="${ix}"]`)); });
 
-    const t = setInterval(()=>{
+    const tick = setInterval(()=>{
       left -= 0.1;
       ringSet('tring', left/LIMIT, left);
-      if (left <= 0){ clearInterval(t); if (!locked) pick(null); }
+      if (left <= 0){ clearInterval(tick); if (!locked) pick(null); }
     }, 100);
-    activeTimers.push(t);
+    activeTimers.push(tick);
 
     function pick(k, btn){
       if (locked) return;
-      locked = true; clearInterval(t);
+      locked = true; clearInterval(tick);
       const ok = k === f.c;
       perCat[f.c].t++;
       if (ok){
@@ -2515,9 +2723,10 @@ function missionRadar(){
 }
 
 /* =====================================================================
-   MODULE 03 — REVIEW CONSOLE (the capstone case queue)
+   MODULE 02 — REVIEW CONSOLE (the capstone case queue)
    ===================================================================== */
 function missionConsole(){
+  setScreen('console');
   const m = MISSIONS.find(x=>x.id==='console');
   let i = 0, correct = 0, justOK = 0, justTotal = 0, points = 0;
   const perCat = {};
@@ -2698,7 +2907,7 @@ function missionConsole(){
 }
 
 /* =====================================================================
-   MODULE 04 — THRESHOLD TRAINER (procedural drills off the rule engine)
+   MODULE 03 — THRESHOLD TRAINER (procedural drills off the rule engine)
    ===================================================================== */
 const TT_NAMES = ['Bilal Ahmed','Nadia Khan','Rehan Textiles (Pvt) Ltd','Faisal Traders','Hina Aslam',
                   'Zubair Motors','Karachi Steel Co.','Ayesha Malik','Junaid Brothers','Sadia Rauf'];
@@ -2762,6 +2971,7 @@ function makeDrill(kind){
 }
 
 function missionThresholds(){
+  setScreen('thresholds');
   const m = MISSIONS.find(x=>x.id==='thresholds');
   const plan = shuffle(['none','none','verify','verify','ctr','ctr','ctr','str','str','edd','edd','edd']);
   const drills = plan.map(makeDrill);
@@ -2804,16 +3014,16 @@ function missionThresholds(){
       .then(ix=>{ const o = TT_OPTIONS[ix];
                   pick(o.k, document.querySelector(`#crows .crow[data-i="${ix}"]`)); });
 
-    const t = setInterval(()=>{
+    const tick = setInterval(()=>{
       left -= 0.1;
       ringSet('tring', left/LIMIT, left);
-      if (left <= 0){ clearInterval(t); if (!locked) pick(null); }
+      if (left <= 0){ clearInterval(tick); if (!locked) pick(null); }
     }, 100);
-    activeTimers.push(t);
+    activeTimers.push(tick);
 
     function pick(k, btn){
       if (locked) return;
-      locked = true; clearInterval(t);
+      locked = true; clearInterval(tick);
       const ok = k === ans.k;
       perKind[ans.k] = perKind[ans.k] || {c:0,t:0};
       perKind[ans.k].t++;
@@ -2876,6 +3086,7 @@ function missionThresholds(){
    REFERENCE VAULT
    ===================================================================== */
 function screenVault(){
+  setScreen('vault');
   setKeys(null);
   clearActors();
   setScene(null);
@@ -2922,6 +3133,7 @@ function screenVault(){
    CREDENTIAL
    ===================================================================== */
 function screenCertificate(avg){
+  setScreen('cert');
   setKeys(null);
   clearActors();
   setScene('bg-hall');
@@ -2998,15 +3210,16 @@ function coldOpen(){
           SENTINEL</h1>
       </div>
       <div id="bubbleslot" style="max-width:640px"></div>
-      <div id="ctaslot"></div>
+      <div id="ctaslot" class="cta-mid"></div>
     </div>`;
 
     (async ()=>{
-      await new Promise(r=>setTimeout(r, 700));
+      const live = _voiceFile === '01-intro-elena.mp3' && _voice && !_voice.ended;
+      await new Promise(r=>setTimeout(r, live ? 80 : 700));
       if (cancelled) return;
 
       actor('elena-explain','right');
-      await new Promise(r=>setTimeout(r, 500));
+      await new Promise(r=>setTimeout(r, live ? 80 : 500));
       if (cancelled) return;
       await say(speakerElenaRole(),
         isUr()
@@ -3028,7 +3241,7 @@ function coldOpen(){
       const slot = document.getElementById('ctaslot');
       if (!slot || cancelled) return;
       slot.innerHTML =
-        `<button class="cnext" id="beginbtn" style="margin:0">${t('begin','Begin training')}</button>`;
+        `<button class="cnext" id="beginbtn" style="margin:0">${t('begin','Begin training')} ${icon('arrow')}</button>`;
       const bb = document.getElementById('beginbtn');
       bb.onclick = ()=>{ beep('pick'); finish(); };
       setKeys(e=>{ if (e.key==='Enter'||e.key===' '){ e.preventDefault(); bb.click(); } });
@@ -3050,7 +3263,17 @@ function splash(){
     const minMs = reduce ? 220 : 1700;
     const keys = ['bg-skyline','elena-explain','marcus-neutral'];
     let imgDone = 0, finished = false, raf = 0;
+    let assetsReady = false;
+    let userArmed = false;
+    let langPicked = !!(S.langChosen || S.seenIntro);
     const t0 = performance.now();
+
+    const armGo = ()=>{
+      if (!status) return;
+      status.classList.add('is-go');
+      status.disabled = !langPicked;
+      status.textContent = t('ready','Ready');
+    };
 
     const finish = ()=>{
       if (finished) return;
@@ -3058,7 +3281,6 @@ function splash(){
       cancelAnimationFrame(raf);
       document.removeEventListener('keydown', onKey);
       if (bar) bar.style.width = '100%';
-      if (status) status.textContent = t('ready','Ready');
       el.classList.add('out');
       setTimeout(()=>{
         document.body.classList.remove('splashing');
@@ -3067,27 +3289,59 @@ function splash(){
       }, reduce ? 80 : 460);
     };
 
+    const tryGo = ()=>{
+      if (finished || !assetsReady || !langPicked || !userArmed) return;
+      finish();
+    };
+
+    const pickLang = lang=>{
+      unlockAudio();
+      if (langBox) langBox.classList.add('picked');
+      S.langChosen = true;
+      setLang(lang, true);
+      langPicked = true;
+      prefetchVoices();
+      if (!S.seenIntro && !S.muted) playVoice('01-intro-elena.mp3');
+      else primeVoice('01-intro-elena.mp3');
+      if (assetsReady) armGo();
+    };
+
     const onKey = e=>{
       if (e.target.closest && e.target.closest('.splash-lang')) return;
       if (e.key==='Enter' || e.key===' ' || e.key==='Escape'){
         e.preventDefault();
-        finish();
+        if (assetsReady && langPicked && status) status.click();
+        else pickLang(S.lang || 'en');
       }
     };
     const langBox = document.getElementById('splashlang');
     if (langBox){
+      if (langPicked){
+        langBox.classList.add('picked');
+        langBox.querySelectorAll('.splash-langbtn').forEach(b=>{
+          const on = b.dataset.lang === (S.lang === 'ur' ? 'ur' : 'en');
+          b.classList.toggle('on', on);
+          b.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+      }
       langBox.addEventListener('click', e=>{
         e.stopPropagation();
         const btn = e.target.closest('.splash-langbtn');
         if (!btn) return;
-        setLang(btn.dataset.lang, true);
         beep('pick');
+        pickLang(btn.dataset.lang);
       });
     }
-    el.addEventListener('click', e=>{
-      if (e.target.closest('.splash-lang')) return;
-      finish();
-    });
+    if (status){
+      status.onclick = ()=>{
+        if (status.disabled) return;
+        userArmed = true;
+        unlockAudio();
+        beep('pick');
+        tryGo();
+      };
+    }
+    el.addEventListener('pointerdown', ()=> unlockAudio(), true);
     document.addEventListener('keydown', onKey);
 
     keys.forEach(k=>{
@@ -3095,6 +3349,7 @@ function splash(){
       img.onload = img.onerror = ()=>{ imgDone++; };
       img.src = ART[k];
     });
+    if (langPicked) prefetchVoices();
 
     const loop = now=>{
       if (finished) return;
@@ -3102,11 +3357,15 @@ function splash(){
       const imgPct = imgDone / keys.length;
       const pct = Math.min(1, timePct * 0.55 + imgPct * 0.45);
       if (bar) bar.style.width = (pct * 100).toFixed(1) + '%';
-      if (timePct >= 1 && imgDone >= keys.length) finish();
-      else raf = requestAnimationFrame(loop);
+      if (timePct >= 1 && imgDone >= keys.length){
+        if (bar) bar.style.width = '100%';
+        assetsReady = true;
+        armGo();
+        return;
+      }
+      raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
-    setTimeout(finish, 4500);
   });
 }
 
@@ -3119,14 +3378,14 @@ document.getElementById('soundbtn').onclick = ()=>{
   if (S.muted){
     muteVoice();
   } else {
-    try{ if (AC && AC.state === 'suspended') AC.resume(); }catch(e){}
+    unlockAudio();
     if (!unmuteVoice()) beep('pick');
   }
 };
 document.getElementById('langbtn').onclick = ()=> setLang(isUr() ? 'en' : 'ur');
 document.getElementById('resetbtn').onclick = ()=>{
   if (!confirm(t('resetConfirm','Reset all progress — XP, ranks, badges and best scores?'))) return;
-  S = {xp:0, best:{}, badges:[], seen:[], muted:S.muted, seenIntro:true, lang:S.lang};
+  S = {xp:0, best:{}, badges:[], seen:[], muted:S.muted, seenIntro:true, lang:S.lang, langChosen:!!S.langChosen, screen:'home'};
   save(); renderRank(); home();
   toast(t('resetToast','Progress reset'), t('resetToastD','Back to Trainee with a clean record.'));
 };
@@ -3136,13 +3395,13 @@ applyLang();
 renderRank();
 renderSoundBtn();
 document.addEventListener('pointerdown', e=>{
-  if (!_voice || !_voice.paused || _voice.ended) return;
-  if (e.target.closest('#cmodal, .crow, .act, .cnext, .chip, #confirm, #soundbtn, #langbtn')) return;
-  _voice.play().catch(()=>{});
+  unlockAudio();
+  if (S.muted || e.target.closest('#soundbtn')) return;
+  if (_voice && _voice.paused && !_voice.ended) _voice.play().catch(()=>{});
 }, true);
 splash().then(()=>{
-  if (S.seenIntro) home();
-  else coldOpen().then(home);
+  if (S.seenIntro) resumeApp();
+  else coldOpen().then(resumeApp);
 });
 </script>
 </body>

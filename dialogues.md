@@ -29,7 +29,7 @@ Urdu: Elena = `ur-PK-UzmaNeural` Â· Marcus = `ur-PK-AsadNeural` (slower/lower) Â
 **Speaker:** Elena Vance  
 **File:** `03-onboard-brief-elena-1.mp3`
 
-> There is a new relationship waiting at the counter. Your job is customer due diligence: identify them, verify the identity against a reliable source, establish who really owns the business, and then decide how much scrutiny this file needs.
+> There is a new customer waiting at the counter. Your job is customer due diligence: identify them, verify the identity against a reliable source, establish who really owns the business, and then decide how much scrutiny this file needs.
 
 **Speaker:** Elena Vance  
 **File:** `04-onboard-brief-elena-2.mp3`
