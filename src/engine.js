@@ -1567,7 +1567,7 @@ function missionOnboarding(){
   }
 
   brief(m, 'bg-branch', 'elena-explain', speakerElena(), [
-    {t:'There is a new relationship waiting at the counter. Your job is customer due diligence: identify them, verify the identity against a reliable source, establish who really owns the business, and then decide how much scrutiny this file needs.', tUr:'کاؤنٹر پر ایک نیا رشتہ انتظار کر رہا ہے۔ آپ کا کام کسٹمر ڈیو ڈیلیجنس ہے: ان کی شناخت کریں، شناخت کا کسی قابلِ اعتماد ذریعے سے ویریفائی کریں، یہ طے کریں کہ کاروبار کا اصل مالک کون ہے، اور پھر فیصلہ کریں کہ اس فائل پر کتنی جانچ چاہیے۔', v:'03-onboard-brief-elena-1.mp3'},
+    {t:'There is a new customer waiting at the counter. Your job is customer due diligence: identify them, verify the identity against a reliable source, establish who really owns the business, and then decide how much scrutiny this file needs.', tUr:'کاؤنٹر پر ایک نیا کسٹمر انتظار کر رہا ہے۔ آپ کا کام کسٹمر ڈیو ڈیلیجنس ہے: ان کی شناخت کریں، شناخت کا کسی قابلِ اعتماد ذریعے سے ویریفائی کریں، یہ طے کریں کہ کاروبار کا اصل مالک کون ہے، اور پھر فیصلہ کریں کہ اس فائل پر کتنی جانچ چاہیے۔', v:'03-onboard-brief-elena-1.mp3'},
     {t:'The customer will be helpful right up to the moment you ask something inconvenient. Remember that rapport is not what the file is judged on.', tUr:'کسٹمر اس لمحے تک مددگار رہے گا جب تک آپ کچھ ناگوار نہ پوچھیں۔ یاد رکھیں — فائل پر فیصلہ رپورٹ سے ہوتا ہے، دوستانہ رویے سے نہیں۔', v:'04-onboard-brief-elena-2.mp3'}
   ]).then(()=>{
     clearActors();
