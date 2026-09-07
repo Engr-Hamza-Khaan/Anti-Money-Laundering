@@ -1,0 +1,4 @@
+node_modules
+dist
+.vite
+tools/_game-raw.js
